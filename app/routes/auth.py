@@ -11,7 +11,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "login.html", {"error": None})
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -20,7 +20,7 @@ def login_submit(request: Request, pin: str = Form(...)):
         auth.login(request)
         return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
-        "login.html", {"request": request, "error": "Wrong PIN, try again!"}
+        request, "login.html", {"error": "Wrong PIN, try again!"}
     )
 
 

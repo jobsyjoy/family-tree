@@ -1,8 +1,7 @@
 """People CRUD routes, returning HTMX-friendly partial HTML."""
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from typing import Optional
 
 from app import auth, repository
 
@@ -14,15 +13,17 @@ def _guard(request: Request):
     return auth.require_auth(request)
 
 
+def _render_list(request: Request):
+    people = repository.list_people()
+    return templates.TemplateResponse(request, "partials/people_list.html", {"people": people})
+
+
 @router.get("", response_class=HTMLResponse)
 def list_people_partial(request: Request):
     redirect = _guard(request)
     if redirect:
         return redirect
-    people = repository.list_people()
-    return templates.TemplateResponse(
-        "partials/people_list.html", {"request": request, "people": people}
-    )
+    return _render_list(request)
 
 
 @router.get("/new", response_class=HTMLResponse)
@@ -32,8 +33,7 @@ def new_person_form(request: Request):
         return redirect
     people = repository.list_people()
     return templates.TemplateResponse(
-        "partials/person_form.html",
-        {"request": request, "person": None, "people": people},
+        request, "partials/person_form.html", {"person": None, "people": people}
     )
 
 
@@ -45,8 +45,7 @@ def edit_person_form(request: Request, person_id: int):
     person = repository.get_person(person_id)
     people = [p for p in repository.list_people() if p["id"] != person_id]
     return templates.TemplateResponse(
-        "partials/person_form.html",
-        {"request": request, "person": person, "people": people},
+        request, "partials/person_form.html", {"person": person, "people": people}
     )
 
 
@@ -71,10 +70,7 @@ def create_person(
         "gender": gender or None,
         "notes": notes or None,
     })
-    people = repository.list_people()
-    return templates.TemplateResponse(
-        "partials/people_list.html", {"request": request, "people": people}
-    )
+    return _render_list(request)
 
 
 @router.post("/{person_id}", response_class=HTMLResponse)
@@ -99,10 +95,7 @@ def update_person(
         "gender": gender or None,
         "notes": notes or None,
     })
-    people = repository.list_people()
-    return templates.TemplateResponse(
-        "partials/people_list.html", {"request": request, "people": people}
-    )
+    return _render_list(request)
 
 
 @router.delete("/{person_id}", response_class=HTMLResponse)
@@ -111,7 +104,4 @@ def delete_person(request: Request, person_id: int):
     if redirect:
         return redirect
     repository.delete_person(person_id)
-    people = repository.list_people()
-    return templates.TemplateResponse(
-        "partials/people_list.html", {"request": request, "people": people}
-    )
+    return _render_list(request)

@@ -16,7 +16,7 @@ def dashboard(request: Request):
         return redirect
     upcoming = events.get_upcoming_events(days_ahead=60)
     return templates.TemplateResponse(
-        "dashboard.html", {"request": request, "upcoming": upcoming}
+        request, "dashboard.html", {"upcoming": upcoming}
     )
 
 

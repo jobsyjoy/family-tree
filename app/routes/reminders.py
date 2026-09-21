@@ -1,8 +1,9 @@
 """Reminder CRUD routes."""
+from typing import Optional
+
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from typing import Optional
 
 from app import auth, events, repository
 
@@ -18,8 +19,7 @@ def _render_panel(request: Request):
     people = repository.list_people()
     reminders = repository.list_reminders()
     return templates.TemplateResponse(
-        "partials/reminders_panel.html",
-        {"request": request, "people": people, "reminders": reminders},
+        request, "partials/reminders_panel.html", {"people": people, "reminders": reminders}
     )
 
 
@@ -69,5 +69,5 @@ def upcoming_widget(request: Request):
         return redirect
     upcoming = events.get_upcoming_events(days_ahead=60)
     return templates.TemplateResponse(
-        "partials/upcoming_widget.html", {"request": request, "upcoming": upcoming}
+        request, "partials/upcoming_widget.html", {"upcoming": upcoming}
     )

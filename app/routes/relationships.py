@@ -13,18 +13,23 @@ def _guard(request: Request):
     return auth.require_auth(request)
 
 
+def _render_panel(request: Request):
+    people = repository.list_people()
+    rels = repository.list_relationships()
+    people_by_id = {p["id"]: p for p in people}
+    return templates.TemplateResponse(
+        request,
+        "partials/relationships_panel.html",
+        {"people": people, "relationships": rels, "people_by_id": people_by_id},
+    )
+
+
 @router.get("", response_class=HTMLResponse)
 def relationships_panel(request: Request):
     redirect = _guard(request)
     if redirect:
         return redirect
-    people = repository.list_people()
-    rels = repository.list_relationships()
-    people_by_id = {p["id"]: p for p in people}
-    return templates.TemplateResponse(
-        "partials/relationships_panel.html",
-        {"request": request, "people": people, "relationships": rels, "people_by_id": people_by_id},
-    )
+    return _render_panel(request)
 
 
 @router.post("", response_class=HTMLResponse)
@@ -39,13 +44,7 @@ def create_relationship(
         return redirect
     if person_a_id != person_b_id and relationship_type in ("parent", "spouse"):
         repository.create_relationship(person_a_id, person_b_id, relationship_type)
-    people = repository.list_people()
-    rels = repository.list_relationships()
-    people_by_id = {p["id"]: p for p in people}
-    return templates.TemplateResponse(
-        "partials/relationships_panel.html",
-        {"request": request, "people": people, "relationships": rels, "people_by_id": people_by_id},
-    )
+    return _render_panel(request)
 
 
 @router.delete("/{relationship_id}", response_class=HTMLResponse)
@@ -54,10 +53,4 @@ def delete_relationship(request: Request, relationship_id: int):
     if redirect:
         return redirect
     repository.delete_relationship(relationship_id)
-    people = repository.list_people()
-    rels = repository.list_relationships()
-    people_by_id = {p["id"]: p for p in people}
-    return templates.TemplateResponse(
-        "partials/relationships_panel.html",
-        {"request": request, "people": people, "relationships": rels, "people_by_id": people_by_id},
-    )
+    return _render_panel(request)
