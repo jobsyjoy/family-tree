@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Family Tree Dashboard{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 md:p-6">
+  <header class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <span class="text-4xl">🌳</span>
+      <div>
+        <h1 class="text-2xl font-bold text-wmblue-100">Family Tree Dashboard</h1>
+        <p class="text-gray-100 text-sm">Keep track of your people, big days, and reminders</p>
+      </div>
+    </div>
+    <a href="/logout" class="text-sm text-gray-100 hover:text-wmred-100 border border-gray-50 rounded-lg px-3 py-1.5">
+      Log out
+    </a>
+  </header>
+
+  <!-- Upcoming events widget -->
+  <section id="upcoming-widget" hx-get="/reminders/upcoming" hx-trigger="load, refreshUpcoming from:body" class="mb-6">
+    {% include "partials/upcoming_widget.html" %}
+  </section>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-4 border-b border-gray-50">
+    <button onclick="showTab('tree')" id="tab-btn-tree" class="tab-btn tab-active">🌳 Tree View</button>
+    <button onclick="showTab('people')" id="tab-btn-people" class="tab-btn">👥 People</button>
+    <button onclick="showTab('relationships')" id="tab-btn-relationships" class="tab-btn">🔗 Relationships</button>
+    <button onclick="showTab('reminders')" id="tab-btn-reminders" class="tab-btn">⏰ Reminders</button>
+  </div>
+
+  <!-- Tree tab -->
+  <div id="tab-tree" class="tab-panel">
+    <div class="bg-white rounded-xl border border-gray-50 shadow-sm">
+      <div id="tree-container" class="w-full h-[600px] relative overflow-hidden rounded-xl"></div>
+    </div>
+  </div>
+
+  <!-- People tab -->
+  <div id="tab-people" class="tab-panel hidden">
+    <div class="bg-white rounded-xl border border-gray-50 shadow-sm p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-semibold text-lg">Family Members</h2>
+        <button hx-get="/people/new" hx-target="#person-form-modal" hx-swap="innerHTML"
+          class="bg-wmblue-100 hover:bg-wmblue-110 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          + Add Person
+        </button>
+      </div>
+      <div id="person-form-modal"></div>
+      <div id="people-list" hx-get="/people" hx-trigger="load, refreshPeople from:body">
+        Loading...
+      </div>
+    </div>
+  </div>
+
+  <!-- Relationships tab -->
+  <div id="tab-relationships" class="tab-panel hidden">
+    <div id="relationships-panel" hx-get="/relationships" hx-trigger="load, refreshRelationships from:body, refreshPeople from:body">
+      Loading...
+    </div>
+  </div>
+
+  <!-- Reminders tab -->
+  <div id="tab-reminders" class="tab-panel hidden">
+    <div id="reminders-panel" hx-get="/reminders" hx-trigger="load, refreshReminders from:body, refreshPeople from:body">
+      Loading...
+    </div>
+  </div>
+</div>
+
+<script src="/static/tabs.js"></script>
+<script src="/static/tree.js"></script>
+{% endblock %}

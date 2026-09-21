@@ -1,0 +1,26 @@
+{% if upcoming|length == 0 %}
+<div class="bg-white rounded-xl border border-gray-50 p-4 text-gray-100 text-sm">
+  No upcoming birthdays or reminders in the next 60 days. 😴
+</div>
+{% else %}
+<div class="bg-white rounded-xl border border-gray-50 shadow-sm p-4">
+  <h2 class="font-semibold text-lg mb-3 flex items-center gap-2">
+    ⏰ Coming Up
+  </h2>
+  <div class="flex gap-3 overflow-x-auto pb-1">
+    {% for ev in upcoming[:10] %}
+    <div class="flex-shrink-0 w-48 rounded-lg border p-3
+      {% if ev.days_until == 0 %}bg-spark-10 border-spark-100
+      {% elif ev.days_until <= 7 %}bg-blue-50 border-wmblue-100
+      {% else %}bg-gray-5 border-gray-50{% endif %}">
+      <div class="text-2xl mb-1">{% if ev.type == 'birthday' %}🎂{% else %}🔔{% endif %}</div>
+      <div class="font-medium text-sm">{{ ev.title }}</div>
+      <div class="text-xs text-gray-100 mt-1">
+        {% if ev.days_until == 0 %}Today!{% elif ev.days_until == 1 %}Tomorrow{% else %}In {{ ev.days_until }} days{% endif %}
+        &middot; {{ ev.date }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

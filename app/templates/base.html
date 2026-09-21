@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Family Tree Dashboard{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          wmblue: { 100: '#0053e2', 110: '#0047c2', 130: '#003399' },
+          spark: { 10: '#fff8e6', 100: '#ffc220', 140: '#995213' },
+          gray: { 5: '#f7f7f7', 10: '#eef0f2', 50: '#c9ccd1', 100: '#767676', 160: '#2e2f32' },
+          wmred: { 100: '#ea1100' },
+          wmgreen: { 100: '#2a8703' }
+        }
+      }
+    }
+  }
+</script>
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-gray-5 text-gray-160 min-h-screen">
+{% block content %}{% endblock %}
+</body>
+</html>

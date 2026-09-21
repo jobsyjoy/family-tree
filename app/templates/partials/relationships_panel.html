@@ -1,0 +1,59 @@
+<div class="bg-white rounded-xl border border-gray-50 shadow-sm p-4">
+  <h2 class="font-semibold text-lg mb-4">Manage Relationships</h2>
+
+  {% if people|length < 2 %}
+  <p class="text-gray-100 text-sm">Add at least 2 people first before creating relationships.</p>
+  {% else %}
+  <form hx-post="/relationships" hx-target="#relationships-panel" hx-swap="innerHTML"
+        hx-on::after-request="document.body.dispatchEvent(new Event('refreshRelationships'))"
+        class="flex flex-wrap items-end gap-3 mb-6 bg-gray-5 rounded-lg p-3">
+    <div>
+      <label class="block text-xs font-medium mb-1">Person</label>
+      <select name="person_a_id" required class="border border-gray-50 rounded-lg px-3 py-2 text-sm">
+        {% for p in people %}
+        <option value="{{ p.id }}">{{ p.first_name }} {{ p.last_name or '' }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-medium mb-1">Relationship</label>
+      <select name="relationship_type" required class="border border-gray-50 rounded-lg px-3 py-2 text-sm">
+        <option value="parent">is parent of</option>
+        <option value="spouse">is spouse of</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-medium mb-1">Other Person</label>
+      <select name="person_b_id" required class="border border-gray-50 rounded-lg px-3 py-2 text-sm">
+        {% for p in people %}
+        <option value="{{ p.id }}">{{ p.first_name }} {{ p.last_name or '' }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="bg-wmblue-100 hover:bg-wmblue-110 text-white px-4 py-2 rounded-lg text-sm font-medium">
+      + Add Link
+    </button>
+  </form>
+
+  <div class="space-y-2">
+    {% for r in relationships %}
+    {% set a = people_by_id.get(r.person_a_id) %}
+    {% set b = people_by_id.get(r.person_b_id) %}
+    {% if a and b %}
+    <div class="flex items-center justify-between border border-gray-50 rounded-lg px-3 py-2 text-sm">
+      <span>
+        <strong>{{ a.first_name }}</strong>
+        {% if r.relationship_type == 'parent' %}is parent of{% else %}is spouse of{% endif %}
+        <strong>{{ b.first_name }}</strong>
+      </span>
+      <button hx-delete="/relationships/{{ r.id }}" hx-target="#relationships-panel" hx-swap="innerHTML"
+        class="text-xs text-wmred-100 hover:underline">Remove</button>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% if relationships|length == 0 %}
+    <p class="text-gray-100 text-sm">No relationships yet.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
