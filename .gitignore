@@ -7,3 +7,4 @@ data/*.db-journal
 server.log
 cookies.txt
 app/static/vendor/*.tgz 
+docs-private/ 

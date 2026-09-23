@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Hale Family (Demo)</title>
+<style>
+/* Shared styles: used by the dashboard AND the standalone export.
+   Keep this file free of Tailwind-specific assumptions. */
+
+.tab-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #767676;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  background: none;
+  transition: all 0.15s ease;
+}
+.tab-btn:hover { color: #0053e2; }
+.tab-active {
+  color: #0053e2 !important;
+  border-bottom-color: #0053e2 !important;
+}
+
+/* --- Tree canvas --- */
+.ft-node { cursor: pointer; }
+.ft-node:focus { outline: none; }
+.ft-node:focus-visible circle {
+  stroke: #0053e2;
+  stroke-width: 4;
+}
+.ft-node:hover circle { filter: brightness(1.12); }
+
+.ft-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #767676;
+  font-size: 0.9rem;
+}
+
+/* --- Detail panel --- */
+.ft-detail {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 17rem;
+  max-height: calc(100% - 1.5rem);
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #c9ccd1;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 1rem;
+  z-index: 10;
+}
+.ft-detail[hidden] { display: none; }
+.ft-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ft-detail-head h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2e2f32;
+  margin: 0;
+}
+.ft-sub { font-size: 0.78rem; color: #767676; margin: 0.15rem 0 0; }
+.ft-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #767676;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.ft-close:hover { color: #2e2f32; }
+.ft-detail-body { margin: 0; }
+.ft-row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid #eef0f2;
+}
+.ft-row dt { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.02em; }
+.ft-row dd { font-size: 0.82rem; color: #2e2f32; margin: 0; overflow-wrap: anywhere; }
+
+/* --- View toggle --- */
+.view-btn {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #767676;
+  background: #fff;
+  border: 1px solid #c9ccd1;
+  cursor: pointer;
+}
+.view-btn:first-child { border-radius: 999px 0 0 999px; }
+.view-btn:last-child { border-radius: 0 999px 999px 0; border-left: none; }
+.view-btn:hover { background: #f7f7f7; }
+.view-active {
+  background: #0053e2 !important;
+  color: #fff !important;
+  border-color: #0053e2 !important;
+}
+.view-btn:focus-visible { outline: 3px solid #0053e2; outline-offset: 2px; }
+
+
+/* --- Standalone export shell --- */
+:root { --blue:#0053e2; --ink:#2e2f32; --muted:#767676; --line:#c9ccd1; --bg:#f7f7f7; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+.wrap { max-width: 1200px; margin: 0 auto; padding: 1.25rem; }
+header.app { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+header.app h1 { font-size: 1.5rem; margin: 0; color: var(--blue); }
+.status { font-size: .8rem; color: var(--muted); margin: .15rem 0 0; }
+.status-dirty { color: #8a5a00; font-weight: 600; }
+.toolbar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+
+button {
+  font: inherit; font-size: .85rem; font-weight: 600; cursor: pointer;
+  border-radius: .5rem; border: 1px solid var(--line); background: #fff;
+  color: var(--ink); padding: .5rem .9rem;
+}
+button:hover { background: #eef0f2; }
+button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+button.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+button.primary:hover { background: #0047c2; }
+button.danger { color: #b3170a; border-color: #e8b4af; }
+button.danger:hover { background: #fdecea; }
+.view-toggle { display: inline-flex; }
+
+.panel { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; }
+#tree-container { position: relative; width: 100%; height: min(620px, calc(100vh - 230px)); min-height: 380px; overflow: hidden; border-radius: .75rem; }
+.tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); margin-bottom: 1rem; }
+.tab-btn { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; }
+
+.card {
+  display: flex; justify-content: space-between; align-items: center; gap: .75rem;
+  border: 1px solid var(--line); border-radius: .5rem; padding: .6rem .75rem; margin-bottom: .5rem;
+  background: #fff;
+}
+.card-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+.card-actions button { padding: .3rem .6rem; font-size: .78rem; }
+.muted { color: var(--muted); }
+.small { font-size: .78rem; }
+
+dialog {
+  border: none; border-radius: .9rem; padding: 0; max-width: 640px; width: 92vw;
+  box-shadow: 0 20px 50px rgba(0,0,0,.25);
+}
+dialog::backdrop { background: rgba(0,0,0,.45); }
+.dialog-inner { padding: 1.25rem; max-height: 82vh; overflow-y: auto; }
+dialog h2 { margin: 0 0 .75rem; font-size: 1.15rem; }
+fieldset { border: 1px solid var(--line); border-radius: .6rem; margin: 0 0 .9rem; padding: .75rem; }
+legend { font-size: .75rem; font-weight: 700; text-transform: uppercase; color: var(--muted); padding: 0 .35rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: .7rem; }
+.field { display: flex; flex-direction: column; gap: .25rem; }
+.field span { font-size: .78rem; font-weight: 600; }
+input, select, textarea {
+  font: inherit; font-size: .88rem; padding: .45rem .6rem;
+  border: 1px solid var(--line); border-radius: .45rem; width: 100%; background: #fff; color: var(--ink);
+}
+input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outline-offset: 1px; border-color: var(--blue); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; padding-top: .25rem; }
+.rel-form { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; margin-bottom: 1rem; }
+.rel-form .field { min-width: 170px; flex: 1; }
+.legend-key { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .75rem; color: var(--muted); margin-top: .6rem; }
+.swatch { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .3rem; vertical-align: middle; }
+.note { font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: .75rem; }
+@media print { .toolbar, .tabs, .note { display: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div>
+      <h1> The Hale Family (Demo)</h1>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+    <div class="toolbar">
+      <div class="view-toggle" role="group" aria-label="Tree layout">
+        <button type="button" class="view-btn view-active" data-view-btn="layered" aria-pressed="true">Generations</button>
+        <button type="button" class="view-btn" data-view-btn="force" aria-pressed="false">Web</button>
+      </div>
+      <button type="button" id="add-person" class="primary">+ Add person</button>
+      <button type="button" id="save-file">Save / Share file</button>
+      <button type="button" id="export-json">JSON</button>
+      <button type="button" id="reset-data" class="danger">Reset</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab-btn tab-active" data-tab="tree"> Tree</button>
+    <button type="button" class="tab-btn" data-tab="people"> People</button>
+    <button type="button" class="tab-btn" data-tab="rel"> Relationships</button>
+  </div>
+
+  <section id="panel-tree" class="tab-panel panel">
+    <div id="tree-container"></div>
+    <div class="legend-key">
+      <span><span class="swatch" style="background:#0053e2"></span>Male</span>
+      <span><span class="swatch" style="background:#e91e8c"></span>Female</span>
+      <span><span class="swatch" style="background:#7c3aed"></span>Other</span>
+      <span><span class="swatch" style="background:#767676"></span>Unspecified</span>
+      <span>Dark ring = deceased · Gold dashed line = marriage</span>
+      <span>Scroll to zoom, drag to pan, click a person for details.</span>
+    </div>
+  </section>
+
+  <section id="panel-people" class="tab-panel panel" hidden>
+    <div id="people-list"></div>
+  </section>
+
+  <section id="panel-rel" class="tab-panel panel" hidden>
+    <form id="rel-form" class="rel-form">
+      <label class="field"><span>Person A</span><select id="rel-a"></select></label>
+      <label class="field"><span>Relationship</span>
+        <select id="rel-type">
+          <option value="parent">is parent of</option>
+          <option value="spouse">is married to</option>
+        </select>
+      </label>
+      <label class="field"><span>Person B</span><select id="rel-b"></select></label>
+      <button type="submit" class="primary">Link</button>
+    </form>
+    <div id="rel-list"></div>
+  </section>
+
+  <p class="note">
+    This file is fully self-contained &mdash; edits live in your browser.
+    Click <strong>Save / Share file</strong> to download an updated copy you can
+    email on; whoever opens it can keep editing from there.
+    Exported from the Family Tree Dashboard.
+  </p>
+</div>
+
+<dialog id="person-dialog" aria-labelledby="dialog-title">
+  <form id="person-form" method="dialog">
+    <div class="dialog-inner">
+      <h2 id="dialog-title">Add person</h2>
+      <div id="form-body"></div>
+      <div class="dialog-actions">
+        <button type="button" id="cancel-form">Cancel</button>
+        <button type="submit" class="primary">Save</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script type="application/json" id="ft-payload">{"title": "The Hale Family (Demo)", "exported_at": "23 Sep 2026, 15:15", "fields": [{"name": "first_name", "label": "First name", "kind": "text", "required": true, "options": [], "group": "Basics", "placeholder": ""}, {"name": "last_name", "label": "Last name", "kind": "text", "required": false, "options": [], "group": "Basics", "placeholder": ""}, {"name": "nickname", "label": "Nickname", "kind": "text", "required": false, "options": [], "group": "Basics", "placeholder": "What everyone calls them"}, {"name": "gender", "label": "Gender", "kind": "select", "required": false, "options": ["female", "male", "other"], "group": "Basics", "placeholder": ""}, {"name": "photo_url", "label": "Photo URL", "kind": "url", "required": false, "options": [], "group": "Basics", "placeholder": "https://..."}, {"name": "dob", "label": "Date of birth", "kind": "date", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "birth_place", "label": "Birth place", "kind": "text", "required": false, "options": [], "group": "Life dates", "placeholder": "City, Country"}, {"name": "dod", "label": "Date of death", "kind": "date", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "death_place", "label": "Death place", "kind": "text", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "occupation", "label": "Occupation", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": ""}, {"name": "education", "label": "Education", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": ""}, {"name": "fun_fact", "label": "Fun fact", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": "Famously bad at karaoke"}, {"name": "notes", "label": "Notes / bio", "kind": "textarea", "required": false, "options": [], "group": "Life details", "placeholder": ""}], "data": {"nodes": [{"first_name": "Arthur", "last_name": "Hale", "nickname": "Art", "gender": "male", "photo_url": null, "dob": "1938-04-02", "birth_place": "Leeds, UK", "dod": "2016-11-30", "death_place": null, "occupation": "Railway engineer", "education": "Leeds Technical College", "fun_fact": "Could whistle two notes at once.", "notes": "Built the garden shed that still stands today.", "id": 1, "name": "Arthur Hale", "generation": 0}, {"first_name": "Clare", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1972-03-11", "birth_place": null, "dod": null, "death_place": null, "occupation": "Marine biologist", "education": null, "fun_fact": "Has swum with whale sharks.", "notes": null, "id": 5, "name": "Clare Hale", "generation": 1}, {"first_name": "Ella", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1998-09-05", "birth_place": null, "dod": null, "death_place": null, "occupation": "Product designer", "education": "Central Saint Martins", "fun_fact": "Climbs competitively.", "notes": null, "id": 6, "name": "Ella Hale", "generation": 2}, {"first_name": "Mary", "last_name": "Hale", "nickname": "Mim", "gender": "female", "photo_url": null, "dob": "1941-08-19", "birth_place": "York, UK", "dod": null, "death_place": null, "occupation": "Primary school teacher", "education": null, "fun_fact": "Has never lost a game of Scrabble.", "notes": null, "id": 2, "name": "Mary Hale", "generation": 0}, {"first_name": "Peter", "last_name": "Hale", "nickname": null, "gender": "male", "photo_url": null, "dob": "1968-01-15", "birth_place": "Leeds, UK", "dod": null, "death_place": null, "occupation": "Architect", "education": "University of Manchester", "fun_fact": "Ran the London Marathon in 1999.", "notes": null, "id": 3, "name": "Peter Hale", "generation": 1}, {"first_name": "Rowan", "last_name": "Hale", "nickname": null, "gender": "other", "photo_url": null, "dob": "2024-02-14", "birth_place": null, "dod": null, "death_place": null, "occupation": null, "education": null, "fun_fact": null, "notes": "Newest member of the family!", "id": 8, "name": "Rowan Hale", "generation": 3}, {"first_name": "Susan", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1970-06-23", "birth_place": "Bristol, UK", "dod": null, "death_place": null, "occupation": "Nurse practitioner", "education": null, "fun_fact": "Speaks fluent Welsh.", "notes": null, "id": 4, "name": "Susan Hale", "generation": 1}, {"first_name": "Tom", "last_name": "Hale", "nickname": null, "gender": "male", "photo_url": null, "dob": "2001-12-20", "birth_place": null, "dod": null, "death_place": null, "occupation": "Software engineer", "education": null, "fun_fact": "Makes his own hot sauce.", "notes": null, "id": 7, "name": "Tom Hale", "generation": 2}], "links": [{"source": 1, "target": 2, "type": "spouse"}, {"source": 3, "target": 4, "type": "spouse"}, {"source": 1, "target": 3, "type": "parent"}, {"source": 2, "target": 3, "type": "parent"}, {"source": 1, "target": 5, "type": "parent"}, {"source": 2, "target": 5, "type": "parent"}, {"source": 3, "target": 6, "type": "parent"}, {"source": 4, "target": 6, "type": "parent"}, {"source": 3, "target": 7, "type": "parent"}, {"source": 4, "target": 7, "type": "parent"}, {"source": 6, "target": 8, "type": "parent"}]}}</script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- D3 loaded from CDN: needs internet on first open. Run scripts/fetch_d3.py to inline it instead. -->
+<script>
+/**
+ * FamilyTree rendering engine.
+ *
+ * One renderer, two layouts:
+ *   - 'layered': classic top-down generational tree
+ *   - 'force':   collapsible force-directed graph
+ *
+ * Used by BOTH the live dashboard and the exported standalone file, so this
+ * file must never assume a server exists. Data in, SVG out.
+ */
+(function (global) {
+  'use strict';
+
+  const COLORS = {
+    female: '#e91e8c',
+    male: '#0053e2',
+    other: '#7c3aed',
+    unknown: '#767676',
+    spouse: '#ffc220',
+    parent: '#9aa0a6',
+    text: '#2e2f32',
+  };
+
+  const NODE_R = 26;
+  const COL_W = 170;
+  const ROW_H = 150;
+
+  function colorFor(gender) {
+    return COLORS[gender] || COLORS.unknown;
+  }
+
+  function initials(node) {
+    const first = (node.first_name || '?')[0];
+    const last = (node.last_name || '')[0] || '';
+    return (first + last).toUpperCase();
+  }
+
+  function calcAge(dob, dod) {
+    if (!dob) return null;
+    const start = new Date(dob);
+    if (isNaN(start)) return null;
+    const end = dod ? new Date(dod) : new Date();
+    let age = end.getFullYear() - start.getFullYear();
+    const m = end.getMonth() - start.getMonth();
+    if (m < 0 || (m === 0 && end.getDate() < start.getDate())) age--;
+    return age >= 0 ? age : null;
+  }
+
+  /** Index links once so every layout can ask "who are X's relatives?". */
+  function buildIndex(data) {
+    const childrenOf = new Map();
+    const parentsOf = new Map();
+    const spousesOf = new Map();
+    const id = (v) => (v && typeof v === 'object' ? v.id : v);
+    const push = (map, key, value) => {
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(value);
+    };
+    data.links.forEach((l) => {
+      const source = id(l.source), target = id(l.target);
+      if (l.type === 'parent') {
+        push(childrenOf, source, target);
+        push(parentsOf, target, source);
+      } else {
+        push(spousesOf, source, target);
+        push(spousesOf, target, source);
+      }
+    });
+    return { childrenOf, parentsOf, spousesOf };
+  }
+
+  /**
+   * Layered layout: group by generation, then order each row so that
+   * children sit near their parents instead of scattering randomly.
+   */
+  function layeredPositions(nodes, index) {
+    const rows = new Map();
+    nodes.forEach((n) => {
+      const gen = n.generation || 0;
+      if (!rows.has(gen)) rows.set(gen, []);
+      rows.get(gen).push(n);
+    });
+
+    const sortedGens = [...rows.keys()].sort((a, b) => a - b);
+    const placed = new Map();
+
+    sortedGens.forEach((gen) => {
+      const row = rows.get(gen);
+      // Sort by average parent x so lines cross as little as possible.
+      row.sort((a, b) => {
+        const key = (n) => {
+          const parents = index.parentsOf.get(n.id) || [];
+          const xs = parents.map((p) => placed.get(p)).filter((x) => x !== undefined);
+          return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : Infinity;
+        };
+        const diff = key(a) - key(b);
+        return diff !== 0 && isFinite(diff) ? diff : a.name.localeCompare(b.name);
+      });
+      const width = (row.length - 1) * COL_W;
+      row.forEach((n, i) => {
+        n.x = i * COL_W - width / 2;
+        n.y = gen * ROW_H;
+        placed.set(n.id, n.x);
+      });
+    });
+    return nodes;
+  }
+
+  function renderDetail(panel, node, fieldMeta) {
+    if (!panel) return;
+    const age = calcAge(node.dob, node.dod);
+    const rows = fieldMeta
+      .filter((f) => node[f.name] && f.name !== 'first_name' && f.name !== 'last_name')
+      .map((f) => `<div class="ft-row"><dt>${f.label}</dt><dd>${escapeHtml(String(node[f.name]))}</dd></div>`)
+      .join('');
+    panel.innerHTML = `
+      <div class="ft-detail-head">
+        <div>
+          <h3>${escapeHtml(node.name)}</h3>
+          ${age !== null ? `<p class="ft-sub">${node.dod ? 'Lived' : 'Age'} ${age} years</p>` : ''}
+        </div>
+        <button type="button" class="ft-close" aria-label="Close details">&times;</button>
+      </div>
+      <dl class="ft-detail-body">${rows || '<p class="ft-sub">No extra details recorded yet.</p>'}</dl>`;
+    panel.hidden = false;
+    panel.querySelector('.ft-close').onclick = () => { panel.hidden = true; };
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function emptyState(container, message) {
+    container.innerHTML = `<div class="ft-empty">${message}</div>`;
+  }
+
+  /**
+   * Draw the tree.
+   * @param {Object} opts
+   * @param {HTMLElement} opts.container
+   * @param {Object} opts.data  {nodes, links}
+   * @param {'layered'|'force'} opts.view
+   * @param {Array} opts.fieldMeta  [{name,label}] for the detail panel
+   * @param {Function} [opts.onSelect] called with the clicked node
+   */
+  function render(opts) {
+    const { container, data, fieldMeta = [], onSelect } = opts;
+    const view = opts.view || 'layered';
+    container.innerHTML = '';
+
+    if (!data.nodes || !data.nodes.length) {
+      emptyState(container, 'Add some family members to see the tree grow! \u{1F331}');
+      return;
+    }
+
+    const width = container.clientWidth || 900;
+    const height = container.clientHeight || 600;
+    const index = buildIndex(data);
+
+    const svg = d3.select(container).append('svg')
+      .attr('width', '100%')
+      .attr('height', '100%')
+      .attr('viewBox', [0, 0, width, height]);
+    const g = svg.append('g');
+
+    const zoom = d3.zoom().scaleExtent([0.15, 3])
+      .on('zoom', (e) => g.attr('transform', e.transform));
+    svg.call(zoom);
+
+    const panel = document.createElement('div');
+    panel.className = 'ft-detail';
+    panel.hidden = true;
+    container.appendChild(panel);
+
+    const nodes = data.nodes.map((d) => ({ ...d }));
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    // Copy links too. d3.forceSimulation rewrites source/target into node
+    // objects in place, so handing it the caller's array would corrupt the
+    // saved data. Renderers must never mutate what they are given.
+    const linkId = (v) => (v && typeof v === 'object' ? v.id : v);
+    const links = data.links
+      .filter((l) => byId.has(linkId(l.source)) && byId.has(linkId(l.target)))
+      .map((l) => ({ source: linkId(l.source), target: linkId(l.target), type: l.type }));
+
+    const linkSel = g.append('g').attr('class', 'ft-links')
+      .selectAll('path').data(links).join('path')
+      .attr('fill', 'none')
+      .attr('stroke', (d) => (d.type === 'spouse' ? COLORS.spouse : COLORS.parent))
+      .attr('stroke-width', (d) => (d.type === 'spouse' ? 3 : 2))
+      .attr('stroke-dasharray', (d) => (d.type === 'spouse' ? '5,4' : null));
+
+    const nodeSel = g.append('g').attr('class', 'ft-nodes')
+      .selectAll('g').data(nodes).join('g')
+      .attr('class', 'ft-node')
+      .attr('tabindex', 0)
+      .attr('role', 'button')
+      .attr('aria-label', (d) => `${d.name}. Show details.`)
+      .on('click', (e, d) => select(d))
+      .on('keydown', (e, d) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(d); }
+      });
+
+    function select(d) {
+      renderDetail(panel, d, fieldMeta);
+      if (onSelect) onSelect(d);
+    }
+
+    nodeSel.append('circle')
+      .attr('r', NODE_R)
+      .attr('fill', (d) => colorFor(d.gender))
+      .attr('stroke', (d) => (d.dod ? '#2e2f32' : '#fff'))
+      .attr('stroke-width', (d) => (d.dod ? 3 : 2));
+
+    nodeSel.append('text').text(initials)
+      .attr('text-anchor', 'middle').attr('dy', '0.35em')
+      .attr('fill', '#fff').attr('font-size', '15px')
+      .attr('font-weight', '700').attr('pointer-events', 'none');
+
+    nodeSel.append('text').text((d) => d.name)
+      .attr('text-anchor', 'middle').attr('dy', NODE_R + 16)
+      .attr('font-size', '12px').attr('font-weight', '600')
+      .attr('fill', COLORS.text).attr('pointer-events', 'none');
+
+    nodeSel.append('text')
+      .text((d) => (d.dob ? d.dob.slice(0, 4) + (d.dod ? '\u2013' + d.dod.slice(0, 4) : '') : ''))
+      .attr('text-anchor', 'middle').attr('dy', NODE_R + 30)
+      .attr('font-size', '10px').attr('fill', COLORS.unknown)
+      .attr('pointer-events', 'none');
+
+    if (view === 'layered') {
+      runLayered();
+    } else {
+      runForce();
+    }
+
+    function elbow(d) {
+      const s = byId.get(d.source) || d.source;
+      const t = byId.get(d.target) || d.target;
+      if (d.type === 'spouse') return `M${s.x},${s.y} L${t.x},${t.y}`;
+      const mid = (s.y + t.y) / 2;
+      return `M${s.x},${s.y} V${mid} H${t.x} V${t.y}`;
+    }
+
+    function runLayered() {
+      layeredPositions(nodes, index);
+      linkSel.attr('d', elbow);
+      nodeSel.attr('transform', (d) => `translate(${d.x},${d.y})`);
+      fitToScreen();
+    }
+
+    function runForce() {
+      const sim = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id((d) => d.id)
+          .distance((l) => (l.type === 'spouse' ? 70 : 130)))
+        .force('charge', d3.forceManyBody().strength(-420))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collide', d3.forceCollide().radius(NODE_R + 18));
+
+      nodeSel.call(d3.drag()
+        .on('start', (e, d) => {
+          if (!e.active) sim.alphaTarget(0.3).restart();
+          d.fx = d.x; d.fy = d.y;
+        })
+        .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+        .on('end', (e, d) => {
+          if (!e.active) sim.alphaTarget(0);
+          d.fx = null; d.fy = null;
+        }));
+
+      sim.on('tick', () => {
+        linkSel.attr('d', (d) => `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`);
+        nodeSel.attr('transform', (d) => `translate(${d.x},${d.y})`);
+      });
+    }
+
+    function fitToScreen() {
+      // Pad by the actual drawn extent, not just node centres: each node
+      // carries a name and a date label below it, which is why the bottom
+      // row used to get clipped.
+      const PAD_X = NODE_R + 60;   // half a name label either side
+      const PAD_TOP = NODE_R + 12;
+      const PAD_BOTTOM = NODE_R + 40;  // circle + name + dates
+      const xs = nodes.map((n) => n.x);
+      const ys = nodes.map((n) => n.y);
+      const minX = Math.min(...xs) - PAD_X, maxX = Math.max(...xs) + PAD_X;
+      const minY = Math.min(...ys) - PAD_TOP, maxY = Math.max(...ys) + PAD_BOTTOM;
+      const spanX = Math.max(maxX - minX, 1);
+      const spanY = Math.max(maxY - minY, 1);
+      // Never scale up past 1:1 -- a two-person tree blown up to fill the
+      // panel looks absurd. Do allow shrinking as far as needed so a large
+      // family still fits instead of running off the canvas.
+      const scale = Math.min(1, width / spanX, height / spanY);
+      const tx = width / 2 - scale * (minX + maxX) / 2;
+      const ty = height / 2 - scale * (minY + maxY) / 2;
+      svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    }
+
+    return { fitToScreen };
+  }
+
+  global.FamilyTree = { render, calcAge, colorFor, escapeHtml, buildIndex };
+})(window);
+
+</script>
+<script>
+/**
+ * Standalone export editor.
+ *
+ * Runs with zero backend: the family data lives in memory, is mirrored to
+ * localStorage so a refresh doesn't lose work, and is saved by downloading a
+ * fresh copy of this very file with the new data baked in. That is what makes
+ * the export re-shareable: whoever edits it can pass the new file along.
+ */
+(function () {
+  'use strict';
+
+  const BOOT = JSON.parse(document.getElementById('ft-payload').textContent);
+  const STORAGE_KEY = 'familyTree:' + (BOOT.title || 'default');
+  const FIELDS = BOOT.fields;
+
+  let state = load();
+  let view = 'layered';
+  let dirty = false;
+
+  /**
+   * Force the graph into a known-good shape.
+   *
+   * This matters more than it looks: D3's force simulation replaces a link's
+   * numeric source/target with live node objects. If such a link ever reaches
+   * JSON.stringify, it comes back as an object and every lookup by id fails
+   * silently -- parents detach and the whole tree collapses into one row.
+   * Normalising on load and before save makes that class of bug impossible.
+   */
+  function normalize(raw) {
+    const nodes = Array.isArray(raw && raw.nodes) ? raw.nodes.filter(Boolean) : [];
+    const ids = new Set(nodes.map((n) => n.id));
+    const endpoint = (v) => (v && typeof v === 'object' ? Number(v.id) : Number(v));
+    const seen = new Set();
+    const links = (Array.isArray(raw && raw.links) ? raw.links : []).reduce((acc, l) => {
+      const source = endpoint(l.source);
+      const target = endpoint(l.target);
+      const type = l.type === 'spouse' ? 'spouse' : 'parent';
+      if (!ids.has(source) || !ids.has(target) || source === target) return acc;
+      // Spouse links are symmetric, so key them order-independently.
+      const key = type === 'spouse'
+        ? type + ':' + Math.min(source, target) + ':' + Math.max(source, target)
+        : type + ':' + source + ':' + target;
+      if (seen.has(key)) return acc;
+      seen.add(key);
+      acc.push({ source, target, type });
+      return acc;
+    }, []);
+    return { nodes, links };
+  }
+
+  function load() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = normalize(JSON.parse(saved));
+        if (parsed.nodes.length) return parsed;
+      }
+    } catch (e) { /* corrupt cache, fall through to the baked-in data */ }
+    return normalize(structuredClone(BOOT.data));
+  }
+
+  function resetToOriginal() {
+    if (!confirm('Discard your edits and reload the data this file was shared with?')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* nothing to clear */ }
+    state = normalize(structuredClone(BOOT.data));
+    dirty = false;
+    recomputeGenerations();
+    draw();
+    renderList();
+    renderRelationships();
+    updateStatus();
+  }
+
+  function persist() {
+    dirty = true;
+    state = normalize(state);
+    recomputeGenerations();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { /* private browsing / quota: in-memory still works */ }
+    // Redraw everything: a new person must also show up in the
+    // relationship dropdowns, not just the tree and the people list.
+    draw();
+    renderList();
+    renderRelationships();
+    updateStatus();
+  }
+
+  function nextId() {
+    return state.nodes.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+  }
+
+  function displayName(n) {
+    return ((n.first_name || '') + ' ' + (n.last_name || '')).trim() || 'Unnamed';
+  }
+
+  /** Mirror of the server-side generation calculation in app/tree.py.
+   *  Children go one row below their parents; spouses share a row. */
+  function recomputeGenerations() {
+    const depth = new Map(state.nodes.map((n) => [n.id, 0]));
+    const parents = state.links.filter((l) => l.type === 'parent');
+    const couples = state.links.filter((l) => l.type === 'spouse');
+    for (let i = 0; i <= state.nodes.length; i++) {
+      let changed = false;
+      parents.forEach((l) => {
+        if (!depth.has(l.source) || !depth.has(l.target)) return;
+        if (depth.get(l.target) < depth.get(l.source) + 1) {
+          depth.set(l.target, depth.get(l.source) + 1);
+          changed = true;
+        }
+      });
+      couples.forEach((l) => {
+        if (!depth.has(l.source) || !depth.has(l.target)) return;
+        const deepest = Math.max(depth.get(l.source), depth.get(l.target));
+        if (depth.get(l.source) !== deepest || depth.get(l.target) !== deepest) {
+          depth.set(l.source, deepest);
+          depth.set(l.target, deepest);
+          changed = true;
+        }
+      });
+      if (!changed) break;
+    }
+    state.nodes.forEach((n) => {
+      n.generation = depth.get(n.id) || 0;
+      n.name = displayName(n);
+    });
+  }
+
+  // ---------- Rendering ----------
+
+  function draw() {
+    FamilyTree.render({
+      container: document.getElementById('tree-container'),
+      data: state,
+      view,
+      fieldMeta: FIELDS,
+    });
+  }
+
+  function updateStatus() {
+    const el = document.getElementById('status');
+    el.textContent = dirty
+      ? 'Unsaved changes \u2014 click "Save / Share file" to keep them.'
+      : state.nodes.length + ' people \u00b7 ' + state.links.length + ' relationships';
+    el.className = dirty ? 'status status-dirty' : 'status';
+  }
+
+  function renderList() {
+    const host = document.getElementById('people-list');
+    if (!state.nodes.length) {
+      host.innerHTML = '<p class="muted">Nobody here yet. Click "Add person" to start.</p>';
+      return;
+    }
+    const esc = FamilyTree.escapeHtml;
+    host.innerHTML = state.nodes
+      .slice()
+      .sort((a, b) => displayName(a).localeCompare(displayName(b)))
+      .map((n) => {
+        const bits = [n.dob && 'b. ' + n.dob, n.occupation, n.birth_place]
+          .filter(Boolean).map(esc).join(' \u00b7 ');
+        return `<div class="card">
+          <div>
+            <strong>${esc(displayName(n))}</strong>
+            ${bits ? `<div class="muted small">${bits}</div>` : ''}
+          </div>
+          <div class="card-actions">
+            <button type="button" data-edit="${n.id}">Edit</button>
+            <button type="button" data-del="${n.id}" class="danger">Delete</button>
+          </div>
+        </div>`;
+      }).join('');
+  }
+
+  function personOptions(selected) {
+    return '<option value="">-- choose --</option>' + state.nodes
+      .map((n) => `<option value="${n.id}"${n.id === selected ? ' selected' : ''}>`
+        + FamilyTree.escapeHtml(displayName(n)) + '</option>')
+      .join('');
+  }
+
+  function renderRelationships() {
+    const host = document.getElementById('rel-list');
+    const byId = new Map(state.nodes.map((n) => [n.id, n]));
+    document.getElementById('rel-a').innerHTML = personOptions();
+    document.getElementById('rel-b').innerHTML = personOptions();
+    if (!state.links.length) {
+      host.innerHTML = '<p class="muted">No relationships linked yet.</p>';
+      return;
+    }
+    const esc = FamilyTree.escapeHtml;
+    host.innerHTML = state.links.map((l, i) => {
+      const a = byId.get(l.source), b = byId.get(l.target);
+      if (!a || !b) return '';
+      const verb = l.type === 'parent' ? 'is parent of' : 'is married to';
+      return `<div class="card">
+        <span>${esc(displayName(a))} <em class="muted">${verb}</em> ${esc(displayName(b))}</span>
+        <button type="button" data-unlink="${i}" class="danger">Remove</button>
+      </div>`;
+    }).join('');
+  }
+
+  // ---------- Person form ----------
+
+  function openForm(person) {
+    const esc = FamilyTree.escapeHtml;
+    const groups = [...new Set(FIELDS.map((f) => f.group))];
+    const body = groups.map((group) => {
+      const inputs = FIELDS.filter((f) => f.group === group).map((f) => {
+        const val = person && person[f.name] != null ? String(person[f.name]) : '';
+        const id = 'f-' + f.name;
+        let input;
+        if (f.kind === 'textarea') {
+          input = `<textarea id="${id}" name="${f.name}" rows="3">${esc(val)}</textarea>`;
+        } else if (f.kind === 'select') {
+          input = `<select id="${id}" name="${f.name}"><option value="">--</option>` +
+            f.options.map((o) => `<option value="${o}"${o === val ? ' selected' : ''}>`
+              + o.charAt(0).toUpperCase() + o.slice(1) + '</option>').join('') + '</select>';
+        } else {
+          const type = f.kind === 'date' ? 'date' : (f.kind === 'url' ? 'url' : 'text');
+          input = `<input id="${id}" type="${type}" name="${f.name}" value="${esc(val)}"`
+            + (f.required ? ' required' : '')
+            + (f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : '') + '>';
+        }
+        return `<label class="field"><span>${esc(f.label)}${f.required ? ' *' : ''}</span>${input}</label>`;
+      }).join('');
+      return `<fieldset><legend>${esc(group)}</legend><div class="grid">${inputs}</div></fieldset>`;
+    }).join('');
+
+    const dlg = document.getElementById('person-dialog');
+    dlg.querySelector('h2').textContent = person ? 'Edit person' : 'Add person';
+    dlg.querySelector('#form-body').innerHTML = body;
+    dlg.querySelector('form').dataset.editing = person ? person.id : '';
+    dlg.showModal();
+    dlg.querySelector('input, select, textarea')?.focus();
+  }
+
+  function submitForm(event) {
+    event.preventDefault();
+    const form = event.target;
+    const values = Object.fromEntries(new FormData(form).entries());
+    FIELDS.forEach((f) => {
+      values[f.name] = (values[f.name] || '').trim() || null;
+    });
+    const editingId = form.dataset.editing;
+    if (editingId) {
+      const person = state.nodes.find((n) => n.id === Number(editingId));
+      Object.assign(person, values);
+    } else {
+      state.nodes.push({ ...values, id: nextId(), generation: 0 });
+    }
+    document.getElementById('person-dialog').close();
+    persist();
+  }
+
+  function deletePerson(id) {
+    const person = state.nodes.find((n) => n.id === id);
+    if (!confirm('Remove ' + displayName(person) + ' and all their links?')) return;
+    state.nodes = state.nodes.filter((n) => n.id !== id);
+    state.links = state.links.filter((l) => l.source !== id && l.target !== id);
+    persist();
+  }
+
+  function addRelationship(event) {
+    event.preventDefault();
+    const a = Number(document.getElementById('rel-a').value);
+    const b = Number(document.getElementById('rel-b').value);
+    const type = document.getElementById('rel-type').value;
+    if (!a || !b || a === b) {
+      alert('Pick two different people.');
+      return;
+    }
+    const exists = state.links.some((l) =>
+      l.type === type && ((l.source === a && l.target === b) ||
+        (type === 'spouse' && l.source === b && l.target === a)));
+    if (!exists) state.links.push({ source: a, target: b, type });
+    persist();
+  }
+
+  // ---------- Save / share ----------
+
+  function saveFile() {
+    // Rewrite the payload inside a clone of this document, then download it.
+    const clone = document.documentElement.cloneNode(true);
+    const payloadEl = clone.querySelector('#ft-payload');
+    payloadEl.textContent = JSON.stringify({
+      title: BOOT.title,
+      exported_at: new Date().toLocaleString(),
+      fields: FIELDS,
+      data: normalize(state),
+    }).replace(/<\//g, '<\\/');
+    // Drop transient UI state so the file opens clean.
+    clone.querySelectorAll('dialog[open]').forEach((d) => d.removeAttribute('open'));
+
+    const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (BOOT.title || 'family-tree').replace(/[^a-z0-9]+/gi, '-').toLowerCase()
+      + '-' + new Date().toISOString().slice(0, 10) + '.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    dirty = false;
+    updateStatus();
+  }
+
+  function exportJson() {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'family-tree-data.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ---------- Wiring ----------
+
+  function setView(next) {
+    view = next;
+    document.querySelectorAll('[data-view-btn]').forEach((b) => {
+      const active = b.dataset.viewBtn === next;
+      b.classList.toggle('view-active', active);
+      b.setAttribute('aria-pressed', String(active));
+    });
+    draw();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    recomputeGenerations();
+    draw();
+    renderList();
+    renderRelationships();
+    updateStatus();
+
+    document.getElementById('add-person').onclick = () => openForm(null);
+    document.getElementById('person-form').onsubmit = submitForm;
+    document.getElementById('cancel-form').onclick =
+      () => document.getElementById('person-dialog').close();
+    document.getElementById('rel-form').onsubmit = addRelationship;
+    document.getElementById('save-file').onclick = saveFile;
+    document.getElementById('export-json').onclick = exportJson;
+    document.getElementById('reset-data').onclick = resetToOriginal;
+    document.querySelectorAll('[data-view-btn]').forEach((b) => {
+      b.onclick = () => setView(b.dataset.viewBtn);
+    });
+
+    document.getElementById('people-list').addEventListener('click', (e) => {
+      const edit = e.target.dataset.edit, del = e.target.dataset.del;
+      if (edit) openForm(state.nodes.find((n) => n.id === Number(edit)));
+      if (del) deletePerson(Number(del));
+    });
+    document.getElementById('rel-list').addEventListener('click', (e) => {
+      const idx = e.target.dataset.unlink;
+      if (idx === undefined) return;
+      state.links.splice(Number(idx), 1);
+      persist();
+    });
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('tab-active'));
+        document.querySelectorAll('.tab-panel').forEach((p) => { p.hidden = true; });
+        btn.classList.add('tab-active');
+        document.getElementById('panel-' + btn.dataset.tab).hidden = false;
+        if (btn.dataset.tab === 'tree') draw();
+      };
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+  });
+})();
+
+</script>
+</body>
+</html>
