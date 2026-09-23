@@ -51,17 +51,19 @@
     const childrenOf = new Map();
     const parentsOf = new Map();
     const spousesOf = new Map();
+    const id = (v) => (v && typeof v === 'object' ? v.id : v);
     const push = (map, key, value) => {
       if (!map.has(key)) map.set(key, []);
       map.get(key).push(value);
     };
     data.links.forEach((l) => {
+      const source = id(l.source), target = id(l.target);
       if (l.type === 'parent') {
-        push(childrenOf, l.source, l.target);
-        push(parentsOf, l.target, l.source);
+        push(childrenOf, source, target);
+        push(parentsOf, target, source);
       } else {
-        push(spousesOf, l.source, l.target);
-        push(spousesOf, l.target, l.source);
+        push(spousesOf, source, target);
+        push(spousesOf, target, source);
       }
     });
     return { childrenOf, parentsOf, spousesOf };
@@ -174,9 +176,13 @@
 
     const nodes = data.nodes.map((d) => ({ ...d }));
     const byId = new Map(nodes.map((n) => [n.id, n]));
+    // Copy links too. d3.forceSimulation rewrites source/target into node
+    // objects in place, so handing it the caller's array would corrupt the
+    // saved data. Renderers must never mutate what they are given.
+    const linkId = (v) => (v && typeof v === 'object' ? v.id : v);
     const links = data.links
-      .filter((l) => byId.has(l.source) && byId.has(l.target))
-      .map((l) => ({ ...l }));
+      .filter((l) => byId.has(linkId(l.source)) && byId.has(linkId(l.target)))
+      .map((l) => ({ source: linkId(l.source), target: linkId(l.target), type: l.type }));
 
     const linkSel = g.append('g').attr('class', 'ft-links')
       .selectAll('path').data(links).join('path')
@@ -270,11 +276,22 @@
     }
 
     function fitToScreen() {
+      // Pad by the actual drawn extent, not just node centres: each node
+      // carries a name and a date label below it, which is why the bottom
+      // row used to get clipped.
+      const PAD_X = NODE_R + 60;   // half a name label either side
+      const PAD_TOP = NODE_R + 12;
+      const PAD_BOTTOM = NODE_R + 40;  // circle + name + dates
       const xs = nodes.map((n) => n.x);
       const ys = nodes.map((n) => n.y);
-      const minX = Math.min(...xs) - 90, maxX = Math.max(...xs) + 90;
-      const minY = Math.min(...ys) - 70, maxY = Math.max(...ys) + 90;
-      const scale = Math.min(1.1, 0.92 / Math.max((maxX - minX) / width, (maxY - minY) / height));
+      const minX = Math.min(...xs) - PAD_X, maxX = Math.max(...xs) + PAD_X;
+      const minY = Math.min(...ys) - PAD_TOP, maxY = Math.max(...ys) + PAD_BOTTOM;
+      const spanX = Math.max(maxX - minX, 1);
+      const spanY = Math.max(maxY - minY, 1);
+      // Never scale up past 1:1 -- a two-person tree blown up to fill the
+      // panel looks absurd. Do allow shrinking as far as needed so a large
+      // family still fits instead of running off the canvas.
+      const scale = Math.min(1, width / spanX, height / spanY);
       const tx = width / 2 - scale * (minX + maxX) / 2;
       const ty = height / 2 - scale * (minY + maxY) / 2;
       svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));

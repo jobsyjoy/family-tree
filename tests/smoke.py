@@ -163,6 +163,55 @@ def test_export():
           and html.strip().endswith("</html>"))
     check("filename is sane", export.suggested_filename("Hale Family").startswith("hale-family-"))
 
+    # Every element the editor wires up by id must exist in the shell,
+    # otherwise the export dies on load with a null reference.
+    required_ids = [
+        "ft-payload", "tree-container", "people-list", "rel-list", "rel-form",
+        "rel-a", "rel-b", "rel-type", "person-dialog", "person-form", "form-body",
+        "add-person", "cancel-form", "save-file", "export-json", "reset-data",
+        "status", "panel-tree", "panel-people", "panel-rel",
+    ]
+    missing = [i for i in required_ids if f'id="{i}"' not in html]
+    check("all editor hooks present in template", not missing, str(missing))
+
+    # The editor must defend against D3 rewriting link endpoints into objects.
+    check("export normalises link endpoints", "function normalize(" in html)
+    check("renderer copies links before simulating", "const linkId =" in html)
+
+
+def test_export_payload_shape():
+    """The embedded JSON must be parseable and use plain numeric endpoints.
+
+    Regression guard: object-shaped source/target silently detaches every
+    parent link, which flattens the whole tree into a single row.
+    """
+    print("\n[export payload]")
+    import json
+    import re
+
+    html = export.build_export("Hale Family")
+    match = re.search(
+        r'<script type="application/json" id="ft-payload">(.*?)</script>',
+        html, re.DOTALL,
+    )
+    check("payload block found", match is not None)
+    if not match:
+        return
+    payload = json.loads(match.group(1).replace("<\\/", "</"))
+    data = payload["data"]
+    check("payload carries nodes", len(data["nodes"]) > 0)
+    check("link endpoints are integers",
+          all(isinstance(l["source"], int) and isinstance(l["target"], int)
+              for l in data["links"]))
+    node_ids = {n["id"] for n in data["nodes"]}
+    check("every link points at a real person",
+          all(l["source"] in node_ids and l["target"] in node_ids
+              for l in data["links"]))
+    check("generations survive serialisation",
+          len({n["generation"] for n in data["nodes"]}) >= 3)
+    check("field metadata travels with the data",
+          {f["name"] for f in payload["fields"]} == set(FIELD_NAMES))
+
 
 def test_routes():
     print("\n[routes]")
@@ -196,6 +245,7 @@ def main() -> int:
     test_tree(ids)
     test_cycle_safety()
     test_export()
+    test_export_payload_shape()
     test_routes()
     total = len(PASSED) + len(FAILED)
     print(f"\n{'=' * 52}\n{len(PASSED)}/{total} checks passed")

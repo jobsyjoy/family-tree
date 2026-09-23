@@ -32,11 +32,19 @@
   document.addEventListener('DOMContentLoaded', () => {
     const metaEl = document.getElementById('field-meta');
     if (metaEl) fieldMeta = JSON.parse(metaEl.textContent);
+
+    // Wire the layout toggle. Without this the buttons are just decor.
+    document.querySelectorAll('[data-view-btn]').forEach((btn) => {
+      btn.addEventListener('click', () => window.setTreeView(btn.dataset.viewBtn));
+    });
+
     draw();
     ['refreshPeople', 'refreshRelationships'].forEach((evt) =>
       document.body.addEventListener(evt, draw)
     );
-    window.addEventListener('resize', () => clearTimeout(window._ftRz) ||
-      (window._ftRz = setTimeout(draw, 250)));
+    window.addEventListener('resize', () => {
+      clearTimeout(window._ftResizeTimer);
+      window._ftResizeTimer = setTimeout(draw, 250);
+    });
   });
 })();

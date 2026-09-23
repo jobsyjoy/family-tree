@@ -36,7 +36,7 @@ button.danger:hover { background: #fdecea; }
 .view-toggle { display: inline-flex; }
 
 .panel { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; }
-#tree-container { position: relative; width: 100%; height: 620px; overflow: hidden; border-radius: .75rem; }
+#tree-container { position: relative; width: 100%; height: min(620px, calc(100vh - 230px)); min-height: 380px; overflow: hidden; border-radius: .75rem; }
 .tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); margin-bottom: 1rem; }
 .tab-btn { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; }
 
@@ -89,8 +89,9 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
         <button type="button" class="view-btn" data-view-btn="force" aria-pressed="false">Web</button>
       </div>
       <button type="button" id="add-person" class="primary">+ Add person</button>
-      <button type="button" id="save-file"> Save / Share file</button>
-      <button type="button" id="export-json">⬇ JSON</button>
+      <button type="button" id="save-file">Save / Share file</button>
+      <button type="button" id="export-json">JSON</button>
+      <button type="button" id="reset-data" class="danger">Reset</button>
     </div>
   </header>
 

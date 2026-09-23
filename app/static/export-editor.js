@@ -17,25 +17,72 @@
   let view = 'layered';
   let dirty = false;
 
+  /**
+   * Force the graph into a known-good shape.
+   *
+   * This matters more than it looks: D3's force simulation replaces a link's
+   * numeric source/target with live node objects. If such a link ever reaches
+   * JSON.stringify, it comes back as an object and every lookup by id fails
+   * silently -- parents detach and the whole tree collapses into one row.
+   * Normalising on load and before save makes that class of bug impossible.
+   */
+  function normalize(raw) {
+    const nodes = Array.isArray(raw && raw.nodes) ? raw.nodes.filter(Boolean) : [];
+    const ids = new Set(nodes.map((n) => n.id));
+    const endpoint = (v) => (v && typeof v === 'object' ? Number(v.id) : Number(v));
+    const seen = new Set();
+    const links = (Array.isArray(raw && raw.links) ? raw.links : []).reduce((acc, l) => {
+      const source = endpoint(l.source);
+      const target = endpoint(l.target);
+      const type = l.type === 'spouse' ? 'spouse' : 'parent';
+      if (!ids.has(source) || !ids.has(target) || source === target) return acc;
+      // Spouse links are symmetric, so key them order-independently.
+      const key = type === 'spouse'
+        ? type + ':' + Math.min(source, target) + ':' + Math.max(source, target)
+        : type + ':' + source + ':' + target;
+      if (seen.has(key)) return acc;
+      seen.add(key);
+      acc.push({ source, target, type });
+      return acc;
+    }, []);
+    return { nodes, links };
+  }
+
   function load() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && Array.isArray(parsed.nodes)) return parsed;
+        const parsed = normalize(JSON.parse(saved));
+        if (parsed.nodes.length) return parsed;
       }
     } catch (e) { /* corrupt cache, fall through to the baked-in data */ }
-    return structuredClone(BOOT.data);
+    return normalize(structuredClone(BOOT.data));
+  }
+
+  function resetToOriginal() {
+    if (!confirm('Discard your edits and reload the data this file was shared with?')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* nothing to clear */ }
+    state = normalize(structuredClone(BOOT.data));
+    dirty = false;
+    recomputeGenerations();
+    draw();
+    renderList();
+    renderRelationships();
+    updateStatus();
   }
 
   function persist() {
     dirty = true;
+    state = normalize(state);
     recomputeGenerations();
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) { /* private browsing / quota: in-memory still works */ }
+    // Redraw everything: a new person must also show up in the
+    // relationship dropdowns, not just the tree and the people list.
     draw();
     renderList();
+    renderRelationships();
     updateStatus();
   }
 
@@ -227,7 +274,6 @@
         (type === 'spouse' && l.source === b && l.target === a)));
     if (!exists) state.links.push({ source: a, target: b, type });
     persist();
-    renderRelationships();
   }
 
   // ---------- Save / share ----------
@@ -240,7 +286,7 @@
       title: BOOT.title,
       exported_at: new Date().toLocaleString(),
       fields: FIELDS,
-      data: state,
+      data: normalize(state),
     }).replace(/<\//g, '<\\/');
     // Drop transient UI state so the file opens clean.
     clone.querySelectorAll('dialog[open]').forEach((d) => d.removeAttribute('open'));
@@ -292,6 +338,7 @@
     document.getElementById('rel-form').onsubmit = addRelationship;
     document.getElementById('save-file').onclick = saveFile;
     document.getElementById('export-json').onclick = exportJson;
+    document.getElementById('reset-data').onclick = resetToOriginal;
     document.querySelectorAll('[data-view-btn]').forEach((b) => {
       b.onclick = () => setView(b.dataset.viewBtn);
     });
@@ -306,7 +353,6 @@
       if (idx === undefined) return;
       state.links.splice(Number(idx), 1);
       persist();
-      renderRelationships();
     });
     document.querySelectorAll('.tab-btn').forEach((btn) => {
       btn.onclick = () => {
