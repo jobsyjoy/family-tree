@@ -144,6 +144,14 @@ button.danger:hover { background: #fdecea; }
 
 .panel { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; }
 #tree-container { position: relative; width: 100%; height: min(620px, calc(100vh - 230px)); min-height: 380px; overflow: hidden; border-radius: .75rem; }
+@media (max-width: 560px) {
+  /* Phones: a tall panel is mostly whitespace, and the toolbar wraps onto
+     more rows, so give the tree a shorter, wider-feeling canvas. */
+  .wrap { padding: .75rem; }
+  header.app h1 { font-size: 1.2rem; }
+  #tree-container { height: min(420px, calc(100vh - 300px)); min-height: 300px; }
+  .ft-detail { width: auto; left: .5rem; right: .5rem; }
+}
 .tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); margin-bottom: 1rem; }
 .tab-btn { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; }
 
@@ -260,7 +268,7 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
   </form>
 </dialog>
 
-<script type="application/json" id="ft-payload">{"title": "The Hale Family (Demo)", "exported_at": "23 Sep 2026, 15:15", "fields": [{"name": "first_name", "label": "First name", "kind": "text", "required": true, "options": [], "group": "Basics", "placeholder": ""}, {"name": "last_name", "label": "Last name", "kind": "text", "required": false, "options": [], "group": "Basics", "placeholder": ""}, {"name": "nickname", "label": "Nickname", "kind": "text", "required": false, "options": [], "group": "Basics", "placeholder": "What everyone calls them"}, {"name": "gender", "label": "Gender", "kind": "select", "required": false, "options": ["female", "male", "other"], "group": "Basics", "placeholder": ""}, {"name": "photo_url", "label": "Photo URL", "kind": "url", "required": false, "options": [], "group": "Basics", "placeholder": "https://..."}, {"name": "dob", "label": "Date of birth", "kind": "date", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "birth_place", "label": "Birth place", "kind": "text", "required": false, "options": [], "group": "Life dates", "placeholder": "City, Country"}, {"name": "dod", "label": "Date of death", "kind": "date", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "death_place", "label": "Death place", "kind": "text", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "occupation", "label": "Occupation", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": ""}, {"name": "education", "label": "Education", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": ""}, {"name": "fun_fact", "label": "Fun fact", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": "Famously bad at karaoke"}, {"name": "notes", "label": "Notes / bio", "kind": "textarea", "required": false, "options": [], "group": "Life details", "placeholder": ""}], "data": {"nodes": [{"first_name": "Arthur", "last_name": "Hale", "nickname": "Art", "gender": "male", "photo_url": null, "dob": "1938-04-02", "birth_place": "Leeds, UK", "dod": "2016-11-30", "death_place": null, "occupation": "Railway engineer", "education": "Leeds Technical College", "fun_fact": "Could whistle two notes at once.", "notes": "Built the garden shed that still stands today.", "id": 1, "name": "Arthur Hale", "generation": 0}, {"first_name": "Clare", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1972-03-11", "birth_place": null, "dod": null, "death_place": null, "occupation": "Marine biologist", "education": null, "fun_fact": "Has swum with whale sharks.", "notes": null, "id": 5, "name": "Clare Hale", "generation": 1}, {"first_name": "Ella", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1998-09-05", "birth_place": null, "dod": null, "death_place": null, "occupation": "Product designer", "education": "Central Saint Martins", "fun_fact": "Climbs competitively.", "notes": null, "id": 6, "name": "Ella Hale", "generation": 2}, {"first_name": "Mary", "last_name": "Hale", "nickname": "Mim", "gender": "female", "photo_url": null, "dob": "1941-08-19", "birth_place": "York, UK", "dod": null, "death_place": null, "occupation": "Primary school teacher", "education": null, "fun_fact": "Has never lost a game of Scrabble.", "notes": null, "id": 2, "name": "Mary Hale", "generation": 0}, {"first_name": "Peter", "last_name": "Hale", "nickname": null, "gender": "male", "photo_url": null, "dob": "1968-01-15", "birth_place": "Leeds, UK", "dod": null, "death_place": null, "occupation": "Architect", "education": "University of Manchester", "fun_fact": "Ran the London Marathon in 1999.", "notes": null, "id": 3, "name": "Peter Hale", "generation": 1}, {"first_name": "Rowan", "last_name": "Hale", "nickname": null, "gender": "other", "photo_url": null, "dob": "2024-02-14", "birth_place": null, "dod": null, "death_place": null, "occupation": null, "education": null, "fun_fact": null, "notes": "Newest member of the family!", "id": 8, "name": "Rowan Hale", "generation": 3}, {"first_name": "Susan", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1970-06-23", "birth_place": "Bristol, UK", "dod": null, "death_place": null, "occupation": "Nurse practitioner", "education": null, "fun_fact": "Speaks fluent Welsh.", "notes": null, "id": 4, "name": "Susan Hale", "generation": 1}, {"first_name": "Tom", "last_name": "Hale", "nickname": null, "gender": "male", "photo_url": null, "dob": "2001-12-20", "birth_place": null, "dod": null, "death_place": null, "occupation": "Software engineer", "education": null, "fun_fact": "Makes his own hot sauce.", "notes": null, "id": 7, "name": "Tom Hale", "generation": 2}], "links": [{"source": 1, "target": 2, "type": "spouse"}, {"source": 3, "target": 4, "type": "spouse"}, {"source": 1, "target": 3, "type": "parent"}, {"source": 2, "target": 3, "type": "parent"}, {"source": 1, "target": 5, "type": "parent"}, {"source": 2, "target": 5, "type": "parent"}, {"source": 3, "target": 6, "type": "parent"}, {"source": 4, "target": 6, "type": "parent"}, {"source": 3, "target": 7, "type": "parent"}, {"source": 4, "target": 7, "type": "parent"}, {"source": 6, "target": 8, "type": "parent"}]}}</script>
+<script type="application/json" id="ft-payload">{"title": "The Hale Family (Demo)", "exported_at": "23 Sep 2026, 15:37", "fields": [{"name": "first_name", "label": "First name", "kind": "text", "required": true, "options": [], "group": "Basics", "placeholder": ""}, {"name": "last_name", "label": "Last name", "kind": "text", "required": false, "options": [], "group": "Basics", "placeholder": ""}, {"name": "nickname", "label": "Nickname", "kind": "text", "required": false, "options": [], "group": "Basics", "placeholder": "What everyone calls them"}, {"name": "gender", "label": "Gender", "kind": "select", "required": false, "options": ["female", "male", "other"], "group": "Basics", "placeholder": ""}, {"name": "photo_url", "label": "Photo URL", "kind": "url", "required": false, "options": [], "group": "Basics", "placeholder": "https://..."}, {"name": "dob", "label": "Date of birth", "kind": "date", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "birth_place", "label": "Birth place", "kind": "text", "required": false, "options": [], "group": "Life dates", "placeholder": "City, Country"}, {"name": "dod", "label": "Date of death", "kind": "date", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "death_place", "label": "Death place", "kind": "text", "required": false, "options": [], "group": "Life dates", "placeholder": ""}, {"name": "occupation", "label": "Occupation", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": ""}, {"name": "education", "label": "Education", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": ""}, {"name": "fun_fact", "label": "Fun fact", "kind": "text", "required": false, "options": [], "group": "Life details", "placeholder": "Famously bad at karaoke"}, {"name": "notes", "label": "Notes / bio", "kind": "textarea", "required": false, "options": [], "group": "Life details", "placeholder": ""}], "data": {"nodes": [{"first_name": "Arthur", "last_name": "Hale", "nickname": "Art", "gender": "male", "photo_url": null, "dob": "1938-04-02", "birth_place": "Leeds, UK", "dod": "2016-11-30", "death_place": null, "occupation": "Railway engineer", "education": "Leeds Technical College", "fun_fact": "Could whistle two notes at once.", "notes": "Built the garden shed that still stands today.", "id": 1, "name": "Arthur Hale", "generation": 0}, {"first_name": "Clare", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1972-03-11", "birth_place": null, "dod": null, "death_place": null, "occupation": "Marine biologist", "education": null, "fun_fact": "Has swum with whale sharks.", "notes": null, "id": 5, "name": "Clare Hale", "generation": 1}, {"first_name": "Ella", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1998-09-05", "birth_place": null, "dod": null, "death_place": null, "occupation": "Product designer", "education": "Central Saint Martins", "fun_fact": "Climbs competitively.", "notes": null, "id": 6, "name": "Ella Hale", "generation": 2}, {"first_name": "Mary", "last_name": "Hale", "nickname": "Mim", "gender": "female", "photo_url": null, "dob": "1941-08-19", "birth_place": "York, UK", "dod": null, "death_place": null, "occupation": "Primary school teacher", "education": null, "fun_fact": "Has never lost a game of Scrabble.", "notes": null, "id": 2, "name": "Mary Hale", "generation": 0}, {"first_name": "Peter", "last_name": "Hale", "nickname": null, "gender": "male", "photo_url": null, "dob": "1968-01-15", "birth_place": "Leeds, UK", "dod": null, "death_place": null, "occupation": "Architect", "education": "University of Manchester", "fun_fact": "Ran the London Marathon in 1999.", "notes": null, "id": 3, "name": "Peter Hale", "generation": 1}, {"first_name": "Rowan", "last_name": "Hale", "nickname": null, "gender": "other", "photo_url": null, "dob": "2024-02-14", "birth_place": null, "dod": null, "death_place": null, "occupation": null, "education": null, "fun_fact": null, "notes": "Newest member of the family!", "id": 8, "name": "Rowan Hale", "generation": 3}, {"first_name": "Susan", "last_name": "Hale", "nickname": null, "gender": "female", "photo_url": null, "dob": "1970-06-23", "birth_place": "Bristol, UK", "dod": null, "death_place": null, "occupation": "Nurse practitioner", "education": null, "fun_fact": "Speaks fluent Welsh.", "notes": null, "id": 4, "name": "Susan Hale", "generation": 1}, {"first_name": "Tom", "last_name": "Hale", "nickname": null, "gender": "male", "photo_url": null, "dob": "2001-12-20", "birth_place": null, "dod": null, "death_place": null, "occupation": "Software engineer", "education": null, "fun_fact": "Makes his own hot sauce.", "notes": null, "id": 7, "name": "Tom Hale", "generation": 2}], "links": [{"source": 1, "target": 2, "type": "spouse"}, {"source": 3, "target": 4, "type": "spouse"}, {"source": 1, "target": 3, "type": "parent"}, {"source": 2, "target": 3, "type": "parent"}, {"source": 1, "target": 5, "type": "parent"}, {"source": 2, "target": 5, "type": "parent"}, {"source": 3, "target": 6, "type": "parent"}, {"source": 4, "target": 6, "type": "parent"}, {"source": 3, "target": 7, "type": "parent"}, {"source": 4, "target": 7, "type": "parent"}, {"source": 6, "target": 8, "type": "parent"}]}}</script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <!-- D3 loaded from CDN: needs internet on first open. Run scripts/fetch_d3.py to inline it instead. -->
 <script>
@@ -290,6 +298,8 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
   const NODE_R = 26;
   const COL_W = 170;
   const ROW_H = 150;
+  //: Below this width we tighten spacing so phones aren't mostly whitespace.
+  const NARROW_W = 560;
 
   function colorFor(gender) {
     return COLORS[gender] || COLORS.unknown;
@@ -339,7 +349,9 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
    * Layered layout: group by generation, then order each row so that
    * children sit near their parents instead of scattering randomly.
    */
-  function layeredPositions(nodes, index) {
+  function layeredPositions(nodes, index, compact) {
+    const colW = compact ? COL_W * 0.78 : COL_W;
+    const rowH = compact ? ROW_H * 0.8 : ROW_H;
     const rows = new Map();
     nodes.forEach((n) => {
       const gen = n.generation || 0;
@@ -362,10 +374,10 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
         const diff = key(a) - key(b);
         return diff !== 0 && isFinite(diff) ? diff : a.name.localeCompare(b.name);
       });
-      const width = (row.length - 1) * COL_W;
+      const width = (row.length - 1) * colW;
       row.forEach((n, i) => {
-        n.x = i * COL_W - width / 2;
-        n.y = gen * ROW_H;
+        n.x = i * colW - width / 2;
+        n.y = gen * rowH;
         placed.set(n.id, n.x);
       });
     });
@@ -510,7 +522,7 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
     }
 
     function runLayered() {
-      layeredPositions(nodes, index);
+      layeredPositions(nodes, index, width < NARROW_W);
       linkSel.attr('d', elbow);
       nodeSel.attr('transform', (d) => `translate(${d.x},${d.y})`);
       fitToScreen();
@@ -554,10 +566,20 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
       const minY = Math.min(...ys) - PAD_TOP, maxY = Math.max(...ys) + PAD_BOTTOM;
       const spanX = Math.max(maxX - minX, 1);
       const spanY = Math.max(maxY - minY, 1);
+
       // Never scale up past 1:1 -- a two-person tree blown up to fill the
-      // panel looks absurd. Do allow shrinking as far as needed so a large
-      // family still fits instead of running off the canvas.
-      const scale = Math.min(1, width / spanX, height / spanY);
+      // panel looks absurd.
+      let scale = Math.min(1, width / spanX, height / spanY);
+
+      // On a narrow screen, fitting the full width shrinks a wide tree to an
+      // unreadable speck. Below MIN_SCALE we stop shrinking, fit the height
+      // instead, and let the user pan sideways -- small and pannable beats
+      // complete and illegible.
+      const MIN_SCALE = 0.45;
+      if (scale < MIN_SCALE) {
+        scale = Math.min(1, Math.max(MIN_SCALE, height / spanY));
+      }
+
       const tx = width / 2 - scale * (minX + maxX) / 2;
       const ty = height / 2 - scale * (minY + maxY) / 2;
       svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));

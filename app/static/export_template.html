@@ -37,6 +37,14 @@ button.danger:hover { background: #fdecea; }
 
 .panel { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem; }
 #tree-container { position: relative; width: 100%; height: min(620px, calc(100vh - 230px)); min-height: 380px; overflow: hidden; border-radius: .75rem; }
+@media (max-width: 560px) {
+  /* Phones: a tall panel is mostly whitespace, and the toolbar wraps onto
+     more rows, so give the tree a shorter, wider-feeling canvas. */
+  .wrap { padding: .75rem; }
+  header.app h1 { font-size: 1.2rem; }
+  #tree-container { height: min(420px, calc(100vh - 300px)); min-height: 300px; }
+  .ft-detail { width: auto; left: .5rem; right: .5rem; }
+}
 .tabs { display: flex; gap: .25rem; border-bottom: 1px solid var(--line); margin-bottom: 1rem; }
 .tab-btn { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; }
 

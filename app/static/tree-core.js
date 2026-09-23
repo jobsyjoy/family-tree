@@ -24,6 +24,8 @@
   const NODE_R = 26;
   const COL_W = 170;
   const ROW_H = 150;
+  //: Below this width we tighten spacing so phones aren't mostly whitespace.
+  const NARROW_W = 560;
 
   function colorFor(gender) {
     return COLORS[gender] || COLORS.unknown;
@@ -73,7 +75,9 @@
    * Layered layout: group by generation, then order each row so that
    * children sit near their parents instead of scattering randomly.
    */
-  function layeredPositions(nodes, index) {
+  function layeredPositions(nodes, index, compact) {
+    const colW = compact ? COL_W * 0.78 : COL_W;
+    const rowH = compact ? ROW_H * 0.8 : ROW_H;
     const rows = new Map();
     nodes.forEach((n) => {
       const gen = n.generation || 0;
@@ -96,10 +100,10 @@
         const diff = key(a) - key(b);
         return diff !== 0 && isFinite(diff) ? diff : a.name.localeCompare(b.name);
       });
-      const width = (row.length - 1) * COL_W;
+      const width = (row.length - 1) * colW;
       row.forEach((n, i) => {
-        n.x = i * COL_W - width / 2;
-        n.y = gen * ROW_H;
+        n.x = i * colW - width / 2;
+        n.y = gen * rowH;
         placed.set(n.id, n.x);
       });
     });
@@ -244,7 +248,7 @@
     }
 
     function runLayered() {
-      layeredPositions(nodes, index);
+      layeredPositions(nodes, index, width < NARROW_W);
       linkSel.attr('d', elbow);
       nodeSel.attr('transform', (d) => `translate(${d.x},${d.y})`);
       fitToScreen();
@@ -288,10 +292,20 @@
       const minY = Math.min(...ys) - PAD_TOP, maxY = Math.max(...ys) + PAD_BOTTOM;
       const spanX = Math.max(maxX - minX, 1);
       const spanY = Math.max(maxY - minY, 1);
+
       // Never scale up past 1:1 -- a two-person tree blown up to fill the
-      // panel looks absurd. Do allow shrinking as far as needed so a large
-      // family still fits instead of running off the canvas.
-      const scale = Math.min(1, width / spanX, height / spanY);
+      // panel looks absurd.
+      let scale = Math.min(1, width / spanX, height / spanY);
+
+      // On a narrow screen, fitting the full width shrinks a wide tree to an
+      // unreadable speck. Below MIN_SCALE we stop shrinking, fit the height
+      // instead, and let the user pan sideways -- small and pannable beats
+      // complete and illegible.
+      const MIN_SCALE = 0.45;
+      if (scale < MIN_SCALE) {
+        scale = Math.min(1, Math.max(MIN_SCALE, height / spanY));
+      }
+
       const tx = width / 2 - scale * (minX + maxX) / 2;
       const ty = height / 2 - scale * (minY + maxY) / 2;
       svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
