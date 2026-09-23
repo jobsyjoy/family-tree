@@ -81,6 +81,12 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
 .legend-key { display: flex; gap: 1rem; flex-wrap: wrap; font-size: .75rem; color: var(--muted); margin-top: .6rem; }
 .swatch { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .3rem; vertical-align: middle; }
 .note { font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); margin-top: 1.25rem; padding-top: .75rem; }
+.help-link {
+  font-size: .85rem; font-weight: 600; color: var(--blue); text-decoration: none;
+  border: 1px solid var(--line); border-radius: .5rem; padding: .5rem .9rem; background: #fff;
+}
+.help-link:hover { background: #eef0f2; }
+.help-link:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 @media print { .toolbar, .tabs, .note { display: none; } }
 </style>
 </head>
@@ -100,6 +106,7 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
       <button type="button" id="save-file">Save / Share file</button>
       <button type="button" id="export-json">JSON</button>
       <button type="button" id="reset-data" class="danger">Reset</button>
+      <a class="help-link" href="__GUIDE_URL__" target="_blank" rel="noopener">How to use this</a>
     </div>
   </header>
 
@@ -141,6 +148,7 @@ input:focus, select:focus, textarea:focus { outline: 3px solid var(--blue); outl
   </section>
 
   <p class="note">
+    New here? Read <a href="__GUIDE_URL__" target="_blank" rel="noopener">the guide</a>.
     This file is fully self-contained &mdash; edits live in your browser.
     Click <strong>Save / Share file</strong> to download an updated copy you can
     email on; whoever opens it can keep editing from there.

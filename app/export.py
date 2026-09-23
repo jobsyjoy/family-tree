@@ -9,6 +9,7 @@ dashboard uses -- inlined here rather than reimplemented. DRY applies across
 deployment targets too.
 """
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -18,6 +19,16 @@ from app.fields import PERSON_FIELDS
 STATIC_DIR = Path(__file__).parent / "static"
 VENDOR_D3 = STATIC_DIR / "vendor" / "d3.v7.min.js"
 D3_CDN = "https://d3js.org/d3.v7.min.js"
+
+#: Where the "How to use this" link points. It must be an absolute URL: the
+#: export gets emailed around and opened from a Downloads folder, where a
+#: relative guide.html would not exist. Override with the FAMILY_GUIDE_URL
+#: environment variable if you host the guide somewhere else.
+DEFAULT_GUIDE_URL = "https://jobsyjoy.github.io/family-tree/guide.html"
+
+
+def guide_url() -> str:
+    return os.environ.get("FAMILY_GUIDE_URL", DEFAULT_GUIDE_URL)
 
 
 def _read_static(name: str) -> str:
@@ -63,6 +74,7 @@ def build_export(title: str = "Our Family Tree") -> str:
     substitutions = {
         "__TITLE__": title,
         "__D3__": _d3_script_tag(),
+        "__GUIDE_URL__": guide_url(),
         "__STYLES__": _read_static("styles.css"),
         "__TREE_CORE__": _read_static("tree-core.js"),
         "__EDITOR__": _read_static("export-editor.js"),

@@ -78,6 +78,8 @@ def main() -> int:
     (out_dir / "index.html").write_text(export.build_export(title), encoding="utf-8")
     # Stop Jekyll from trying to process the file and mangling it.
     (out_dir / ".nojekyll").write_text("", encoding="utf-8")
+    # Publish the user guide next to the tree so the in-app Help link resolves.
+    shutil.copyfile(ROOT / "app" / "static" / "guide.html", out_dir / "guide.html")
 
     size = (out_dir / "index.html").stat().st_size
     rel = out_dir.name

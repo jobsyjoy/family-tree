@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to use the Family Tree</title>
+<meta name="description" content="A plain-English guide to building, exploring and sharing your family tree.">
+<style>
+:root { --blue:#0053e2; --ink:#2e2f32; --muted:#5c5f62; --line:#c9ccd1; --bg:#f7f7f7; --soft:#eef4ff; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.65; font-size: 17px;
+}
+.wrap { max-width: 820px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+header.top { padding: 2rem 0 1rem; border-bottom: 3px solid var(--blue); margin-bottom: 2rem; }
+h1 { font-size: 2rem; margin: 0 0 .35rem; color: var(--blue); line-height: 1.2; }
+.lede { font-size: 1.05rem; color: var(--muted); margin: 0; }
+h2 {
+  font-size: 1.3rem; margin: 2.5rem 0 .75rem; padding-top: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+h2:first-of-type { border-top: none; padding-top: 0; }
+h3 { font-size: 1.05rem; margin: 1.5rem 0 .4rem; }
+p, li { margin: .5rem 0; }
+ul, ol { padding-left: 1.4rem; }
+a { color: var(--blue); }
+code {
+  background: #e9ecf1; padding: .12em .4em; border-radius: .25rem;
+  font-size: .88em; font-family: ui-monospace, Consolas, monospace;
+}
+.card { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1.1rem 1.25rem; margin: 1rem 0; }
+.note { background: var(--soft); border-left: 4px solid var(--blue); border-radius: 0 .5rem .5rem 0; padding: .9rem 1.1rem; margin: 1.1rem 0; }
+.warn { background: #fff6e5; border-left: 4px solid #d18d00; border-radius: 0 .5rem .5rem 0; padding: .9rem 1.1rem; margin: 1.1rem 0; }
+.warn strong, .note strong { display: block; margin-bottom: .2rem; }
+table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .95rem; }
+th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: #eef0f2; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+.btn {
+  display: inline-block; background: var(--blue); color: #fff; font-weight: 600;
+  font-size: .9rem; padding: .2rem .6rem; border-radius: .4rem; white-space: nowrap;
+}
+.btn-plain { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps > li {
+  counter-increment: step; position: relative; padding: 0 0 1rem 2.6rem; margin: 0;
+}
+.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: .1rem;
+  width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--blue);
+  color: #fff; font-weight: 700; font-size: .9rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.toc { background: #fff; border: 1px solid var(--line); border-radius: .75rem; padding: 1rem 1.25rem; }
+.toc ol { margin: .4rem 0 0; }
+.swatch { display: inline-block; width: .8rem; height: .8rem; border-radius: 50%; vertical-align: middle; margin-right: .35rem; }
+footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted); }
+.back { display: inline-block; margin-bottom: 1rem; font-weight: 600; }
+@media print {
+  body { background: #fff; font-size: 12pt; }
+  .card, .note, .warn { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  .back { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>How to use the Family Tree</h1>
+  <p class="lede">Everything you can do, in plain English. No technical knowledge needed.</p>
+</header>
+
+<div class="toc">
+  <strong>On this page</strong>
+  <ol>
+    <li><a href="#what">What this is</a></li>
+    <li><a href="#open">Opening it</a></li>
+    <li><a href="#tour">A quick tour of the screen</a></li>
+    <li><a href="#adding">Adding your first people</a></li>
+    <li><a href="#linking">Connecting people together</a></li>
+    <li><a href="#views">The two tree views</a></li>
+    <li><a href="#saving">Saving and sharing your changes</a></li>
+    <li><a href="#phone">Using it on a phone</a></li>
+    <li><a href="#faq">Common questions &amp; troubleshooting</a></li>
+    <li><a href="#privacy">A note on privacy</a></li>
+  </ol>
+</div>
+
+<h2 id="what">1. What this is</h2>
+<p>
+  A family tree you can build, explore, and pass around. You add people, say how
+  they're related, and it draws the tree for you automatically.
+</p>
+<p>There are two ways you might be using it:</p>
+<table>
+  <tr><th>Version</th><th>What it means for you</th></tr>
+  <tr>
+    <td><strong>A web link</strong><br>(e.g. a <code>github.io</code> address)</td>
+    <td>Opens in any browser. You can explore and make changes, but your changes
+    stay on your own device. Think of it as your personal copy.</td>
+  </tr>
+  <tr>
+    <td><strong>A file</strong><br>(something like <code>family-tree.html</code>)</td>
+    <td>Someone emailed or messaged it to you. Double-click to open. Works with
+    no internet after the first load, and you can send an updated copy onwards.</td>
+  </tr>
+</table>
+<p>Both look and work identically. The rest of this guide applies to either.</p>
+
+<h2 id="open">2. Opening it</h2>
+<h3>If you were given a link</h3>
+<p>Click it. That's it — nothing to install, no account, no password.</p>
+<h3>If you were given a file</h3>
+<ol class="steps">
+  <li>Save the file somewhere you'll find it again — your Desktop or Documents folder.</li>
+  <li>Double-click it. It opens in your usual web browser.</li>
+  <li>If it opens in a text editor showing gibberish instead, right-click the file,
+      choose <em>Open with</em>, and pick Chrome, Edge, Safari or Firefox.</li>
+</ol>
+
+<h2 id="tour">3. A quick tour of the screen</h2>
+<p>Across the top you'll find these buttons:</p>
+<table>
+  <tr><th>Button</th><th>What it does</th></tr>
+  <tr><td><span class="btn">Generations</span> <span class="btn btn-plain">Web</span></td>
+      <td>Switches between the two ways of drawing the tree. See <a href="#views">section 6</a>.</td></tr>
+  <tr><td><span class="btn">+ Add person</span></td>
+      <td>Adds a new family member.</td></tr>
+  <tr><td><span class="btn btn-plain">Save / Share file</span></td>
+      <td>Downloads a copy of the tree with your changes included, ready to pass on.</td></tr>
+  <tr><td><span class="btn btn-plain">JSON</span></td>
+      <td>Downloads the raw data. Only useful if you want to do something technical with it — ignore otherwise.</td></tr>
+  <tr><td><span class="btn btn-plain">Reset</span></td>
+      <td>Throws away your changes and goes back to how the tree was when you received it.</td></tr>
+</table>
+<p>Just below are three tabs:</p>
+<ul>
+  <li><strong>Tree</strong> — the picture of your family.</li>
+  <li><strong>People</strong> — a plain list of everyone, where you edit or delete them.</li>
+  <li><strong>Relationships</strong> — where you say who is married to whom, and who is whose child.</li>
+</ul>
+<p>
+  Underneath the tree there's a colour key: <span class="swatch" style="background:#0053e2"></span>blue for male,
+  <span class="swatch" style="background:#e91e8c"></span>pink for female,
+  <span class="swatch" style="background:#7c3aed"></span>purple for other,
+  <span class="swatch" style="background:#767676"></span>grey if not specified.
+  A dark ring around someone means they've passed away. A gold dashed line means a marriage.
+</p>
+
+<h2 id="adding">4. Adding your first people</h2>
+<ol class="steps">
+  <li>Click <span class="btn">+ Add person</span>.</li>
+  <li>Fill in what you know. <strong>Only the first name is required</strong> — everything
+      else is optional, and you can always come back and add more later.</li>
+  <li>Click <strong>Save</strong>.</li>
+</ol>
+<p>The form is split into three sections so it's not overwhelming:</p>
+<table>
+  <tr><th>Section</th><th>What goes in it</th></tr>
+  <tr><td><strong>Basics</strong></td><td>First and last name, nickname, gender, and a link to a photo.</td></tr>
+  <tr><td><strong>Life dates</strong></td><td>Date and place of birth; date and place of death if they've passed away.</td></tr>
+  <tr><td><strong>Life details</strong></td><td>Occupation, education, a fun fact, and free-form notes.</td></tr>
+</table>
+<div class="note">
+  <strong>Tip: start with yourself</strong>
+  Add yourself first, then your parents, then their parents. Working upwards and
+  outwards from someone you know well is much easier than trying to start at the top.
+</div>
+<h3>Editing or removing someone</h3>
+<p>
+  Go to the <strong>People</strong> tab and click <strong>Edit</strong> next to their name.
+  <strong>Delete</strong> removes them along with all their connections — you'll be asked to confirm first.
+</p>
+
+<h2 id="linking">5. Connecting people together</h2>
+<p>
+  Adding people puts them on the chart, but they'll float separately until you say
+  how they're related. That's the <strong>Relationships</strong> tab.
+</p>
+<ol class="steps">
+  <li>Open the <strong>Relationships</strong> tab.</li>
+  <li>Pick the first person from the <strong>Person A</strong> dropdown.</li>
+  <li>Choose <strong>is parent of</strong> or <strong>is married to</strong>.</li>
+  <li>Pick the second person from <strong>Person B</strong>.</li>
+  <li>Click <strong>Link</strong>. The tree redraws straight away.</li>
+</ol>
+<div class="note">
+  <strong>Read it as a sentence</strong>
+  The dropdowns are designed to read left to right like English:
+  "<em>Peter</em> <em>is parent of</em> <em>Ella</em>". If that sentence is true, the link is right.
+  Order matters for parents — getting it backwards puts the child above the parent.
+</div>
+<h3>Both parents</h3>
+<p>
+  Add each parent separately: once for the mother, once for the father. The tree
+  will draw connecting lines from both down to the child.
+</p>
+<h3>Removing a connection</h3>
+<p>
+  Every link is listed underneath the form with a <strong>Remove</strong> button.
+  Removing a link doesn't delete anybody — it just unhooks them.
+</p>
+
+<h2 id="views">6. The two tree views</h2>
+<h3><span class="btn">Generations</span> — the traditional chart</h3>
+<p>
+  Each generation sits on its own row: grandparents at the top, then children,
+  then grandchildren. Best for seeing the shape of the family at a glance, and
+  the one to use when printing.
+</p>
+<h3><span class="btn btn-plain">Web</span> — the floating view</h3>
+<p>
+  Everyone floats freely, connected by lines, and you can drag people around.
+  Useful for untangling complicated or sprawling families.
+</p>
+<h3>Getting around</h3>
+<ul>
+  <li><strong>Zoom:</strong> scroll your mouse wheel, or pinch on a touchscreen.</li>
+  <li><strong>Move around:</strong> click an empty area and drag.</li>
+  <li><strong>See someone's details:</strong> click their circle. A panel appears with
+      everything recorded about them. Close it with the <strong>&times;</strong>.</li>
+  <li><strong>Rearrange (Web view only):</strong> drag a person to move them.</li>
+</ul>
+<div class="note">
+  <strong>Lost the tree off-screen?</strong>
+  Switch to the other view and back again. It re-centres and re-fits everything automatically.
+</div>
+
+<h2 id="saving">7. Saving and sharing your changes</h2>
+<p>This is the most important section, so read it carefully.</p>
+<p>
+  Your changes are remembered automatically in <strong>your own browser</strong>, so
+  closing the tab won't lose your work. But that copy only exists on your device.
+  Nobody else can see it, and it would be lost if you cleared your browser data or
+  switched computers.
+</p>
+<div class="warn">
+  <strong>To keep your work properly, or send it to anyone else</strong>
+  Click <span class="btn btn-plain">Save / Share file</span>. That downloads a brand new
+  copy of the tree with all your additions baked in. <em>That downloaded file</em> is the
+  thing to keep safe and pass on.
+</div>
+<h3>How to share it onwards</h3>
+<ol class="steps">
+  <li>Click <span class="btn btn-plain">Save / Share file</span>.</li>
+  <li>Find the downloaded file (usually your Downloads folder, named something like
+      <code>our-family-tree-2026-05-14.html</code>).</li>
+  <li>Email it, message it, or drop it in a shared folder. The person receiving it
+      double-clicks to open, and can carry on adding to it themselves.</li>
+</ol>
+<div class="warn">
+  <strong>The one real limitation</strong>
+  Everyone works on their own copy. If you and your cousin both add people at the
+  same time, those additions live in two separate files and won't merge themselves.
+  For a family project, it works best if <strong>one person keeps the master copy</strong>
+  — everyone sends their additions to them, and they send out the updated version.
+</div>
+<h3>Printing it</h3>
+<p>
+  Switch to <strong>Generations</strong> view, arrange the tree how you'd like it, then
+  press <strong>Ctrl+P</strong> (or <strong>Cmd+P</strong> on a Mac). Choosing landscape
+  usually gives a better result. To save a PDF, pick "Save as PDF" as the destination.
+</p>
+
+<h2 id="phone">8. Using it on a phone</h2>
+<p>
+  It works on phones and tablets. The tree is smaller, so pinch to zoom and drag to
+  move around. Tapping a person brings up their details across most of the screen.
+</p>
+<p>
+  Adding people works fine on a phone, but if you're entering a lot of relatives in
+  one sitting, a computer with a keyboard will be far less tedious.
+</p>
+
+<h2 id="faq">9. Common questions &amp; troubleshooting</h2>
+
+<h3>I added someone but they're not attached to anyone</h3>
+<p>
+  That's expected — new people start unconnected. Go to the
+  <strong>Relationships</strong> tab and link them up (<a href="#linking">section 5</a>).
+</p>
+
+<h3>Someone's on the wrong row</h3>
+<p>
+  Rows are worked out from the relationships, not entered by hand. If someone's in
+  the wrong generation, a parent link is probably backwards or missing. Check the
+  Relationships list and confirm each one reads correctly as a sentence.
+</p>
+
+<h3>The page is blank, or the tree won't appear</h3>
+<p>
+  The tree drawing is fetched from the internet the first time you open the file, so
+  you need to be online for that first load. If you're offline, connect and refresh.
+  If it's still blank, try a different browser — Chrome, Edge, Firefox and Safari all work.
+</p>
+
+<h3>I made a mess. Can I start over?</h3>
+<p>
+  Yes — click <strong>Reset</strong>. It discards your changes and restores the tree to
+  how it was when you received it. Anything you didn't download with
+  <strong>Save / Share file</strong> will be gone, so save first if you're unsure.
+</p>
+
+<h3>My changes vanished</h3>
+<p>
+  Most likely causes: you cleared your browsing data, you're using private/incognito
+  mode (which forgets everything on close), or you've opened a different copy of the
+  file. This is exactly why downloading via <strong>Save / Share file</strong> matters —
+  that file is the permanent record.
+</p>
+
+<h3>Can two of us edit the same tree at the same time?</h3>
+<p>
+  Not simultaneously, no. See the note in <a href="#saving">section 7</a> — nominate one
+  person to hold the master copy.
+</p>
+
+<h3>How do I add a photo?</h3>
+<p>
+  The photo field takes a web address (a link to an image already online), not a file
+  from your computer. Paste the image's URL into the <strong>Photo URL</strong> box.
+</p>
+
+<h3>Is there a limit on how many people I can add?</h3>
+<p>
+  Nothing you'll hit in practice. Very large trees get wide, so use zoom and drag to
+  navigate, or switch to Web view for a more compact shape.
+</p>
+
+<h2 id="privacy">10. A note on privacy</h2>
+<p>
+  Family trees hold exactly the information used to verify identity — full names,
+  dates of birth, birthplaces, mothers' maiden names. Worth a moment's thought:
+</p>
+<ul>
+  <li>If you're viewing this at a <strong>public web address</strong>, treat anything in it
+      as visible to the world, including search engines.</li>
+  <li>Prefer sending the <strong>file</strong> directly to relatives over publishing a public
+      link containing real details.</li>
+  <li>Think twice before recording living people's full birth dates and birthplaces
+      in anything you'll share widely.</li>
+  <li>There's deliberately nowhere to record phone numbers, email addresses or home
+      addresses — that's intentional, since these files get passed around.</li>
+  <li>Ask before adding other people's details, especially children's.</li>
+</ul>
+
+<footer>
+  <p>
+    Made with the Family Tree Dashboard. Found something confusing, or something
+    this guide doesn't cover? Tell whoever sent you the tree — the guide can be improved.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

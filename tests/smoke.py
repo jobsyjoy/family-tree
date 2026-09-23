@@ -178,6 +178,32 @@ def test_export():
     check("export normalises link endpoints", "function normalize(" in html)
     check("renderer copies links before simulating", "const linkId =" in html)
 
+    # An emailed export sits alone in a Downloads folder, so a relative
+    # guide link would 404. It has to be absolute.
+    check("guide link is present", "How to use this" in html)
+    check("guide link is absolute", export.guide_url().startswith("http"))
+    check("guide token replaced", "__GUIDE_URL__" not in html)
+
+
+def test_guide():
+    """The user manual must exist, be self-contained, and cover the basics."""
+    print("\n[guide]")
+    from pathlib import Path
+
+    path = Path("app/static/guide.html")
+    check("guide file exists", path.exists())
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    check("guide is a complete document", text.strip().startswith("<!DOCTYPE html>")
+          and text.strip().endswith("</html>"))
+    check("guide has no external dependencies",
+          "<script" not in text and "cdn." not in text)
+    topics = ["Add person", "Relationships", "Save / Share file",
+              "Reset", "Generations", "privacy", "phone"]
+    missing = [t for t in topics if t.lower() not in text.lower()]
+    check("guide covers the key topics", not missing, str(missing))
+
 
 def test_export_payload_shape():
     """The embedded JSON must be parseable and use plain numeric endpoints.
@@ -234,6 +260,10 @@ def test_routes():
     check("preview renders inline", client.get("/export/preview").status_code == 200)
     check("missing person returns 404", client.get("/people/99999/edit").status_code == 404)
 
+    guide = client.get("/guide")
+    check("guide route serves the manual",
+          guide.status_code == 200 and "How to use the Family Tree" in guide.text)
+
 
 def main() -> int:
     print(f"Family Tree smoke test  (temp db: {database.DB_PATH})")
@@ -246,6 +276,7 @@ def main() -> int:
     test_cycle_safety()
     test_export()
     test_export_payload_shape()
+    test_guide()
     test_routes()
     total = len(PASSED) + len(FAILED)
     print(f"\n{'=' * 52}\n{len(PASSED)}/{total} checks passed")
