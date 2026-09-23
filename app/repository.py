@@ -1,18 +1,30 @@
 """Data-access functions for people, relationships, and reminders.
 
 Kept separate from routes so route handlers stay thin (SRP FTW).
+Person SQL is generated from app.fields, so adding a field is a one-liner.
 """
-from datetime import date, datetime
 from typing import Optional
 
 from app.database import db_session
+from app.fields import FIELD_NAMES, clean
+
+_COLUMNS = ", ".join(FIELD_NAMES)
+_PLACEHOLDERS = ", ".join("?" for _ in FIELD_NAMES)
+_ASSIGNMENTS = ", ".join(f"{name}=?" for name in FIELD_NAMES)
+
+
+def _values(data: dict) -> tuple:
+    cleaned = clean(data)
+    return tuple(cleaned[name] for name in FIELD_NAMES)
 
 
 # ---------- People ----------
 
 def list_people() -> list[dict]:
     with db_session() as conn:
-        rows = conn.execute("SELECT * FROM people ORDER BY first_name").fetchall()
+        rows = conn.execute(
+            "SELECT * FROM people ORDER BY first_name COLLATE NOCASE"
+        ).fetchall()
         return [dict(r) for r in rows]
 
 
@@ -25,17 +37,8 @@ def get_person(person_id: int) -> Optional[dict]:
 def create_person(data: dict) -> int:
     with db_session() as conn:
         cur = conn.execute(
-            """INSERT INTO people (first_name, last_name, dob, dod, gender, photo_url, notes)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (
-                data["first_name"],
-                data.get("last_name"),
-                data.get("dob"),
-                data.get("dod"),
-                data.get("gender"),
-                data.get("photo_url"),
-                data.get("notes"),
-            ),
+            f"INSERT INTO people ({_COLUMNS}) VALUES ({_PLACEHOLDERS})",
+            _values(data),
         )
         return cur.lastrowid
 
@@ -43,18 +46,8 @@ def create_person(data: dict) -> int:
 def update_person(person_id: int, data: dict) -> None:
     with db_session() as conn:
         conn.execute(
-            """UPDATE people SET first_name=?, last_name=?, dob=?, dod=?, gender=?,
-               photo_url=?, notes=? WHERE id=?""",
-            (
-                data["first_name"],
-                data.get("last_name"),
-                data.get("dob"),
-                data.get("dod"),
-                data.get("gender"),
-                data.get("photo_url"),
-                data.get("notes"),
-                person_id,
-            ),
+            f"UPDATE people SET {_ASSIGNMENTS} WHERE id=?",
+            _values(data) + (person_id,),
         )
 
 

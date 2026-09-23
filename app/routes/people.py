@@ -1,107 +1,70 @@
-"""People CRUD routes, returning HTMX-friendly partial HTML."""
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+"""People CRUD routes, returning HTMX-friendly partial HTML.
 
-from app import auth, repository
+Form parsing is generic: whatever app.fields declares is what we accept.
+"""
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import HTMLResponse
+
+from app import repository
+from app.fields import FIELD_NAMES
+from app.routes.common import guard, render, templates  # noqa: F401
 
 router = APIRouter(prefix="/people")
-templates = Jinja2Templates(directory="app/templates")
 
 
-def _guard(request: Request):
-    return auth.require_auth(request)
+async def _form_data(request: Request) -> dict:
+    form = await request.form()
+    return {name: form.get(name, "") for name in FIELD_NAMES}
 
 
 def _render_list(request: Request):
-    people = repository.list_people()
-    return templates.TemplateResponse(request, "partials/people_list.html", {"people": people})
+    return render(request, "partials/people_list.html",
+                  people=repository.list_people())
+
+
+def _render_form(request: Request, person: dict | None):
+    return render(request, "partials/person_form.html", person=person)
 
 
 @router.get("", response_class=HTMLResponse)
 def list_people_partial(request: Request):
-    redirect = _guard(request)
-    if redirect:
-        return redirect
-    return _render_list(request)
+    return guard(request) or _render_list(request)
 
 
 @router.get("/new", response_class=HTMLResponse)
 def new_person_form(request: Request):
-    redirect = _guard(request)
-    if redirect:
-        return redirect
-    people = repository.list_people()
-    return templates.TemplateResponse(
-        request, "partials/person_form.html", {"person": None, "people": people}
-    )
+    return guard(request) or _render_form(request, None)
 
 
 @router.get("/{person_id}/edit", response_class=HTMLResponse)
 def edit_person_form(request: Request, person_id: int):
-    redirect = _guard(request)
-    if redirect:
-        return redirect
+    if blocked := guard(request):
+        return blocked
     person = repository.get_person(person_id)
-    people = [p for p in repository.list_people() if p["id"] != person_id]
-    return templates.TemplateResponse(
-        request, "partials/person_form.html", {"person": person, "people": people}
-    )
+    if not person:
+        raise HTTPException(status_code=404, detail="Person not found")
+    return _render_form(request, person)
 
 
 @router.post("", response_class=HTMLResponse)
-def create_person(
-    request: Request,
-    first_name: str = Form(...),
-    last_name: str = Form(""),
-    dob: str = Form(""),
-    dod: str = Form(""),
-    gender: str = Form(""),
-    notes: str = Form(""),
-):
-    redirect = _guard(request)
-    if redirect:
-        return redirect
-    repository.create_person({
-        "first_name": first_name,
-        "last_name": last_name or None,
-        "dob": dob or None,
-        "dod": dod or None,
-        "gender": gender or None,
-        "notes": notes or None,
-    })
+async def create_person(request: Request):
+    if blocked := guard(request):
+        return blocked
+    repository.create_person(await _form_data(request))
     return _render_list(request)
 
 
 @router.post("/{person_id}", response_class=HTMLResponse)
-def update_person(
-    request: Request,
-    person_id: int,
-    first_name: str = Form(...),
-    last_name: str = Form(""),
-    dob: str = Form(""),
-    dod: str = Form(""),
-    gender: str = Form(""),
-    notes: str = Form(""),
-):
-    redirect = _guard(request)
-    if redirect:
-        return redirect
-    repository.update_person(person_id, {
-        "first_name": first_name,
-        "last_name": last_name or None,
-        "dob": dob or None,
-        "dod": dod or None,
-        "gender": gender or None,
-        "notes": notes or None,
-    })
+async def update_person(request: Request, person_id: int):
+    if blocked := guard(request):
+        return blocked
+    repository.update_person(person_id, await _form_data(request))
     return _render_list(request)
 
 
 @router.delete("/{person_id}", response_class=HTMLResponse)
 def delete_person(request: Request, person_id: int):
-    redirect = _guard(request)
-    if redirect:
-        return redirect
+    if blocked := guard(request):
+        return blocked
     repository.delete_person(person_id)
     return _render_list(request)

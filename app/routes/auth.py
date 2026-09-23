@@ -1,17 +1,16 @@
 """Login/logout routes."""
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 
 from app import auth
+from app.routes.common import render
 
 router = APIRouter()
-templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html", {"error": None})
+    return render(request, "login.html", error=None)
 
 
 @router.post("/login", response_class=HTMLResponse)
@@ -19,9 +18,7 @@ def login_submit(request: Request, pin: str = Form(...)):
     if pin == auth.get_pin():
         auth.login(request)
         return RedirectResponse(url="/", status_code=303)
-    return templates.TemplateResponse(
-        request, "login.html", {"error": "Wrong PIN, try again!"}
-    )
+    return render(request, "login.html", error="Wrong PIN, try again!")
 
 
 @router.get("/logout")

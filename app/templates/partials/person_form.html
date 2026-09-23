@@ -1,51 +1,54 @@
-<div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" id="modal-backdrop">
-<div class="bg-white rounded-xl p-6 w-full max-w-md shadow-xl">
-  <div class="flex justify-between items-center mb-4">
-    <h3 class="font-semibold text-lg">{% if person %}Edit{% else %}Add{% endif %} Person</h3>
-    <button onclick="document.getElementById('person-form-modal').innerHTML=''" class="text-gray-100 hover:text-gray-160">&times;</button>
+{# Person add/edit modal. Inputs are generated from app.fields --
+   add a field there and it shows up here automatically. #}
+<div class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" id="modal-backdrop">
+<div class="bg-white rounded-xl w-full max-w-2xl shadow-xl max-h-[88vh] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="person-modal-title">
+  <div class="flex justify-between items-center p-5 pb-3 sticky top-0 bg-white border-b border-gray-10">
+    <h3 id="person-modal-title" class="font-semibold text-lg">{% if person %}Edit{% else %}Add{% endif %} Person</h3>
+    <button type="button" onclick="document.getElementById('person-form-modal').innerHTML=''"
+      aria-label="Close dialog" class="text-gray-100 hover:text-gray-160 text-2xl leading-none px-2">&times;</button>
   </div>
+
   <form hx-post="{% if person %}/people/{{ person.id }}{% else %}/people{% endif %}"
         hx-target="#people-list" hx-swap="innerHTML"
         hx-on::after-request="document.getElementById('person-form-modal').innerHTML=''; document.body.dispatchEvent(new Event('refreshPeople')); document.body.dispatchEvent(new Event('refreshUpcoming'))"
-        class="space-y-3">
-    <div>
-      <label class="block text-sm font-medium mb-1">First Name *</label>
-      <input name="first_name" required value="{{ person.first_name if person else '' }}"
-        class="w-full border border-gray-50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-wmblue-100">
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1">Last Name</label>
-      <input name="last_name" value="{{ person.last_name if person else '' }}"
-        class="w-full border border-gray-50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-wmblue-100">
-    </div>
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block text-sm font-medium mb-1">Date of Birth</label>
-        <input type="date" name="dob" value="{{ person.dob if person else '' }}"
-          class="w-full border border-gray-50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-wmblue-100">
+        class="p-5 space-y-4">
+
+    {% for group in field_groups %}
+    <fieldset class="border border-gray-50 rounded-lg p-4">
+      <legend class="text-xs font-bold uppercase tracking-wide text-gray-100 px-2">{{ group }}</legend>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {% for f in fields_in(group) %}
+        {% set value = person[f.name] if person and person[f.name] is not none else '' %}
+        <div class="{% if f.kind == 'textarea' %}sm:col-span-2{% endif %}">
+          <label for="fld-{{ f.name }}" class="block text-sm font-medium mb-1">
+            {{ f.label }}{% if f.required %} <span class="text-wmred-100" aria-hidden="true">*</span>{% endif %}
+          </label>
+          {% set css = "w-full border border-gray-50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-wmblue-100" %}
+          {% if f.kind == 'textarea' %}
+            <textarea id="fld-{{ f.name }}" name="{{ f.name }}" rows="3" class="{{ css }}"
+              {% if f.placeholder %}placeholder="{{ f.placeholder }}"{% endif %}>{{ value }}</textarea>
+          {% elif f.kind == 'select' %}
+            <select id="fld-{{ f.name }}" name="{{ f.name }}" class="{{ css }}">
+              <option value="">--</option>
+              {% for opt in f.options %}
+              <option value="{{ opt }}" {% if value == opt %}selected{% endif %}>{{ opt|capitalize }}</option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input id="fld-{{ f.name }}" name="{{ f.name }}" value="{{ value }}" class="{{ css }}"
+              type="{% if f.kind == 'date' %}date{% elif f.kind == 'url' %}url{% else %}text{% endif %}"
+              {% if f.required %}required{% endif %}
+              {% if f.placeholder %}placeholder="{{ f.placeholder }}"{% endif %}>
+          {% endif %}
+        </div>
+        {% endfor %}
       </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Date of Death</label>
-        <input type="date" name="dod" value="{{ person.dod if person else '' }}"
-          class="w-full border border-gray-50 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-wmblue-100">
-      </div>
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1">Gender</label>
-      <select name="gender" class="w-full border border-gray-50 rounded-lg px-3 py-2">
-        <option value="">--</option>
-        <option value="female" {% if person and person.gender == 'female' %}selected{% endif %}>Female</option>
-        <option value="male" {% if person and person.gender == 'male' %}selected{% endif %}>Male</option>
-        <option value="other" {% if person and person.gender == 'other' %}selected{% endif %}>Other</option>
-      </select>
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1">Notes</label>
-      <textarea name="notes" rows="2" class="w-full border border-gray-50 rounded-lg px-3 py-2">{{ person.notes if person else '' }}</textarea>
-    </div>
-    <div class="flex justify-end gap-2 pt-2">
+    </fieldset>
+    {% endfor %}
+
+    <div class="flex justify-end gap-2 pt-1">
       <button type="button" onclick="document.getElementById('person-form-modal').innerHTML=''"
-        class="px-4 py-2 rounded-lg border border-gray-50 text-sm">Cancel</button>
+        class="px-4 py-2 rounded-lg border border-gray-50 text-sm font-medium">Cancel</button>
       <button type="submit" class="px-4 py-2 rounded-lg bg-wmblue-100 hover:bg-wmblue-110 text-white text-sm font-medium">
         Save
       </button>

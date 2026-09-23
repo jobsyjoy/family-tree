@@ -1,22 +1,18 @@
-"""SQLite database connection and schema setup."""
+"""SQLite connection, schema setup, and lightweight auto-migration."""
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
+
+from app.fields import PERSON_FIELDS, column_definitions
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 DATA_DIR.mkdir(exist_ok=True)
 DB_PATH = DATA_DIR / "family.db"
 
-SCHEMA = """
+SCHEMA = f"""
 CREATE TABLE IF NOT EXISTS people (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    first_name TEXT NOT NULL,
-    last_name TEXT,
-    dob TEXT,
-    dod TEXT,
-    gender TEXT,
-    photo_url TEXT,
-    notes TEXT,
+    {column_definitions()},
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -59,6 +55,25 @@ def db_session():
         conn.close()
 
 
-def init_db() -> None:
+def _migrate_people(conn: sqlite3.Connection) -> list[str]:
+    """Add any person columns missing from an older database.
+
+    SQLite can only ADD COLUMN, which is all we need: new fields are
+    always nullable extras. Existing rows keep their data.
+    """
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(people)")}
+    added = []
+    for field in PERSON_FIELDS:
+        if field.name not in existing:
+            # NOT NULL can't be added to a populated table without a default,
+            # so migrated columns are always nullable.
+            conn.execute(f"ALTER TABLE people ADD COLUMN {field.name} {field.sql_type}")
+            added.append(field.name)
+    return added
+
+
+def init_db() -> list[str]:
+    """Create tables if needed, then backfill any new columns."""
     with db_session() as conn:
         conn.executescript(SCHEMA)
+        return _migrate_people(conn)

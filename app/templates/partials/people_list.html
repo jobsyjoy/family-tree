@@ -1,15 +1,17 @@
 {% if people|length == 0 %}
-<p class="text-gray-100 text-sm py-6 text-center">No family members yet. Add your first one! 🐶</p>
+<p class="text-gray-100 text-sm py-6 text-center">No family members yet. Add your first one!</p>
 {% else %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
   {% for p in people %}
   <div class="border border-gray-50 rounded-lg p-3 flex items-start justify-between gap-2">
-    <div>
-      <div class="font-medium">{{ p.first_name }} {{ p.last_name or '' }}</div>
-      {% if p.dob %}<div class="text-xs text-gray-100">Born {{ p.dob }}</div>{% endif %}
-      {% if p.dod %}<div class="text-xs text-gray-100">Died {{ p.dod }}</div>{% endif %}
-      {% if p.gender %}<div class="text-xs text-gray-100 capitalize">{{ p.gender }}</div>{% endif %}
-      {% if p.notes %}<div class="text-xs text-gray-100 italic mt-1">{{ p.notes }}</div>{% endif %}
+    <div class="min-w-0">
+      <div class="font-medium truncate">{{ p.first_name }} {{ p.last_name or '' }}</div>
+      {% if p.nickname %}<div class="text-xs text-gray-100">"{{ p.nickname }}"</div>{% endif %}
+      {# Summary fields are declared in app.fields, so this stays in sync automatically. #}
+      {% for f in summary_fields if p[f.name] and f.name not in ('first_name', 'last_name') %}
+        <div class="text-xs text-gray-100 truncate">{{ f.label }}: {{ p[f.name] }}</div>
+      {% endfor %}
+      {% if p.notes %}<div class="text-xs text-gray-100 italic mt-1 line-clamp-2">{{ p.notes }}</div>{% endif %}
     </div>
     <div class="flex flex-col gap-1 flex-shrink-0">
       <button hx-get="/people/{{ p.id }}/edit" hx-target="#person-form-modal" hx-swap="innerHTML"

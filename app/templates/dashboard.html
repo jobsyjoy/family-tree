@@ -10,9 +10,15 @@
         <p class="text-gray-100 text-sm">Keep track of your people, big days, and reminders</p>
       </div>
     </div>
-    <a href="/logout" class="text-sm text-gray-100 hover:text-wmred-100 border border-gray-50 rounded-lg px-3 py-1.5">
-      Log out
-    </a>
+    <div class="flex items-center gap-2">
+      <button type="button" onclick="openShare()"
+        class="text-sm bg-wmblue-100 hover:bg-wmblue-110 text-white rounded-lg px-3 py-1.5 font-medium">
+        Share / Export
+      </button>
+      <a href="/logout" class="text-sm text-gray-100 hover:text-wmred-100 border border-gray-50 rounded-lg px-3 py-1.5">
+        Log out
+      </a>
+    </div>
   </header>
 
   <!-- Upcoming events widget -->
@@ -31,7 +37,14 @@
   <!-- Tree tab -->
   <div id="tab-tree" class="tab-panel">
     <div class="bg-white rounded-xl border border-gray-50 shadow-sm">
-      <div id="tree-container" class="w-full h-[600px] relative overflow-hidden rounded-xl"></div>
+      <div class="flex flex-wrap items-center justify-between gap-2 p-3 border-b border-gray-10">
+        <div class="inline-flex" role="group" aria-label="Tree layout">
+          <button type="button" class="view-btn view-active" data-view-btn="layered" aria-pressed="true">Generations</button>
+          <button type="button" class="view-btn" data-view-btn="force" aria-pressed="false">Web</button>
+        </div>
+        <p class="text-xs text-gray-100">Scroll to zoom, drag to pan, click a person for details.</p>
+      </div>
+      <div id="tree-container" class="w-full h-[600px] relative overflow-hidden rounded-b-xl"></div>
     </div>
   </div>
 
@@ -67,6 +80,41 @@
   </div>
 </div>
 
+<!-- Share dialog -->
+<dialog id="share-dialog" class="rounded-xl p-0 w-full max-w-lg backdrop:bg-black/40">
+  <div class="p-5">
+    <div class="flex justify-between items-center mb-3">
+      <h2 class="font-semibold text-lg">Share your family tree</h2>
+      <button type="button" onclick="document.getElementById('share-dialog').close()"
+        aria-label="Close" class="text-2xl leading-none text-gray-100 hover:text-gray-160 px-2">&times;</button>
+    </div>
+    <p class="text-sm text-gray-100 mb-4">
+      Download a single HTML file containing the whole tree. Anyone can open it by
+      double-clicking &mdash; no server, no login, no VPN. They can add people, edit
+      details, and save their own updated copy to pass along.
+    </p>
+    <label for="share-title" class="block text-sm font-medium mb-1">Title on the shared file</label>
+    <input id="share-title" value="Our Family Tree"
+      class="w-full border border-gray-50 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-wmblue-100">
+    <div class="flex flex-wrap justify-end gap-2">
+      <button type="button" onclick="openExport('/export/preview')"
+        class="px-4 py-2 rounded-lg border border-gray-50 text-sm font-medium">Preview</button>
+      <button type="button" onclick="openExport('/export/html')"
+        class="px-4 py-2 rounded-lg bg-wmblue-100 hover:bg-wmblue-110 text-white text-sm font-medium">Download file</button>
+    </div>
+  </div>
+</dialog>
+
+{# Field metadata drives the tree detail panel, straight from app.fields. #}
+<script type="application/json" id="field-meta">{{ field_meta|tojson }}</script>
+<script>
+  function openShare() { document.getElementById('share-dialog').showModal(); }
+  function openExport(path) {
+    const title = encodeURIComponent(document.getElementById('share-title').value || 'Our Family Tree');
+    window.open(path + '?title=' + title, '_blank');
+  }
+</script>
 <script src="/static/tabs.js"></script>
+<script src="/static/tree-core.js"></script>
 <script src="/static/tree.js"></script>
 {% endblock %}

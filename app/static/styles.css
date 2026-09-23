@@ -1,3 +1,6 @@
+/* Shared styles: used by the dashboard AND the standalone export.
+   Keep this file free of Tailwind-specific assumptions. */
+
 .tab-btn {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -8,13 +11,97 @@
   background: none;
   transition: all 0.15s ease;
 }
-.tab-btn:hover {
-  color: #0053e2;
-}
+.tab-btn:hover { color: #0053e2; }
 .tab-active {
   color: #0053e2 !important;
   border-bottom-color: #0053e2 !important;
 }
-.node-card {
+
+/* --- Tree canvas --- */
+.ft-node { cursor: pointer; }
+.ft-node:focus { outline: none; }
+.ft-node:focus-visible circle {
+  stroke: #0053e2;
+  stroke-width: 4;
+}
+.ft-node:hover circle { filter: brightness(1.12); }
+
+.ft-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #767676;
+  font-size: 0.9rem;
+}
+
+/* --- Detail panel --- */
+.ft-detail {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 17rem;
+  max-height: calc(100% - 1.5rem);
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #c9ccd1;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 1rem;
+  z-index: 10;
+}
+.ft-detail[hidden] { display: none; }
+.ft-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.ft-detail-head h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2e2f32;
+  margin: 0;
+}
+.ft-sub { font-size: 0.78rem; color: #767676; margin: 0.15rem 0 0; }
+.ft-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #767676;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.ft-close:hover { color: #2e2f32; }
+.ft-detail-body { margin: 0; }
+.ft-row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 0.4rem;
+  padding: 0.3rem 0;
+  border-top: 1px solid #eef0f2;
+}
+.ft-row dt { font-size: 0.72rem; color: #767676; text-transform: uppercase; letter-spacing: 0.02em; }
+.ft-row dd { font-size: 0.82rem; color: #2e2f32; margin: 0; overflow-wrap: anywhere; }
+
+/* --- View toggle --- */
+.view-btn {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #767676;
+  background: #fff;
+  border: 1px solid #c9ccd1;
   cursor: pointer;
 }
+.view-btn:first-child { border-radius: 999px 0 0 999px; }
+.view-btn:last-child { border-radius: 0 999px 999px 0; border-left: none; }
+.view-btn:hover { background: #f7f7f7; }
+.view-active {
+  background: #0053e2 !important;
+  color: #fff !important;
+  border-color: #0053e2 !important;
+}
+.view-btn:focus-visible { outline: 3px solid #0053e2; outline-offset: 2px; }
